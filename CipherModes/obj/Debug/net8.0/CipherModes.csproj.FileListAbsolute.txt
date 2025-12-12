@@ -9,3 +9,15 @@
 /home/max_d/prog/crypto/KURSACH/CipherModes/obj/Debug/net8.0/refint/CipherModes.dll
 /home/max_d/prog/crypto/KURSACH/CipherModes/obj/Debug/net8.0/CipherModes.pdb
 /home/max_d/prog/crypto/KURSACH/CipherModes/obj/Debug/net8.0/ref/CipherModes.dll
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/bin/Debug/net8.0/CipherModes.deps.json
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/bin/Debug/net8.0/CipherModes.dll
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/bin/Debug/net8.0/CipherModes.pdb
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/CipherModes.GeneratedMSBuildEditorConfig.editorconfig
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/CipherModes.AssemblyInfoInputs.cache
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/CipherModes.AssemblyInfo.cs
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/CipherModes.csproj.CoreCompileInputs.cache
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/CipherModes.sourcelink.json
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/CipherModes.dll
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/refint/CipherModes.dll
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/CipherModes.pdb
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/ref/CipherModes.dll

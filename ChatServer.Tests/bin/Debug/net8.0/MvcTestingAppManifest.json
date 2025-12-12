@@ -1,0 +1,7 @@
+{
+  "ChatServer, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/max_d\/prog\/crypto\/KURSACH\/cryptoLabs\/ChatServer",
+  "CipherModes, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/max_d\/prog\/crypto\/KURSACH\/cryptoLabs\/CipherModes",
+  "DiffieHellman, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/max_d\/prog\/crypto\/KURSACH\/cryptoLabs\/Diffie-Hellman",
+  "LOKI97, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/max_d\/prog\/crypto\/KURSACH\/cryptoLabs\/LOKI97",
+  "RC6, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/home\/max_d\/prog\/crypto\/KURSACH\/cryptoLabs\/RC6"
+}

@@ -1,0 +1,215 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "DiffieHellman/1.0.0": {
+        "dependencies": {
+          "Open.Numeric.Primes": "4.0.4"
+        },
+        "runtime": {
+          "DiffieHellman.dll": {}
+        }
+      },
+      "Microsoft.Extensions.Primitives/7.0.0": {
+        "runtime": {
+          "lib/net7.0/Microsoft.Extensions.Primitives.dll": {
+            "assemblyVersion": "7.0.0.0",
+            "fileVersion": "7.0.22.51805"
+          }
+        }
+      },
+      "Open.Collections/4.0.1": {
+        "dependencies": {
+          "Open.Text": "9.0.0",
+          "Open.Threading": "3.0.3",
+          "System.Collections.Immutable": "8.0.0"
+        },
+        "runtime": {
+          "lib/netstandard2.1/Open.Collections.dll": {
+            "assemblyVersion": "4.0.1.0",
+            "fileVersion": "4.0.1.0"
+          }
+        }
+      },
+      "Open.Disposable/3.0.1": {
+        "runtime": {
+          "lib/netstandard2.1/Open.Disposable.dll": {
+            "assemblyVersion": "3.0.1.0",
+            "fileVersion": "3.0.1.0"
+          }
+        }
+      },
+      "Open.Disposable.ObjectPools/3.0.1": {
+        "dependencies": {
+          "Open.Disposable": "3.0.1",
+          "Open.Threading.Tasks": "1.2.2",
+          "System.Threading.Channels": "8.0.0"
+        },
+        "runtime": {
+          "lib/netstandard2.1/Open.Disposable.ObjectPools.dll": {
+            "assemblyVersion": "3.0.1.0",
+            "fileVersion": "3.0.1.0"
+          }
+        }
+      },
+      "Open.Numeric.Primes/4.0.4": {
+        "dependencies": {
+          "Open.Collections": "4.0.1"
+        },
+        "runtime": {
+          "lib/net8.0/Open.Numeric.Primes.dll": {
+            "assemblyVersion": "4.0.4.0",
+            "fileVersion": "4.0.4.0"
+          }
+        }
+      },
+      "Open.Text/9.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Primitives": "7.0.0"
+        },
+        "runtime": {
+          "lib/net8.0/Open.Text.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.0.0"
+          }
+        }
+      },
+      "Open.Threading/3.0.3": {
+        "dependencies": {
+          "Open.Threading.ReadWriteHelper": "3.0.2"
+        },
+        "runtime": {
+          "lib/netstandard2.1/Open.Threading.dll": {
+            "assemblyVersion": "3.0.3.0",
+            "fileVersion": "3.0.3.0"
+          }
+        }
+      },
+      "Open.Threading.ReadWrite/3.0.1": {
+        "runtime": {
+          "lib/netstandard2.1/Open.Threading.ReadWrite.dll": {
+            "assemblyVersion": "3.0.1.0",
+            "fileVersion": "3.0.1.0"
+          }
+        }
+      },
+      "Open.Threading.ReadWriteHelper/3.0.2": {
+        "dependencies": {
+          "Open.Disposable.ObjectPools": "3.0.1",
+          "Open.Threading.ReadWrite": "3.0.1"
+        },
+        "runtime": {
+          "lib/netstandard2.1/Open.Threading.ReadWriteHelper.dll": {
+            "assemblyVersion": "3.0.2.0",
+            "fileVersion": "3.0.2.0"
+          }
+        }
+      },
+      "Open.Threading.Tasks/1.2.2": {
+        "runtime": {
+          "lib/netstandard2.1/Open.Threading.Tasks.dll": {
+            "assemblyVersion": "1.2.2.0",
+            "fileVersion": "1.2.2.0"
+          }
+        }
+      },
+      "System.Collections.Immutable/8.0.0": {},
+      "System.Threading.Channels/8.0.0": {}
+    }
+  },
+  "libraries": {
+    "DiffieHellman/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Extensions.Primitives/7.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-um1KU5kxcRp3CNuI8o/GrZtD4AIOXDk+RLsytjZ9QPok3ttLUelLKpilVPuaFT3TFjOhSibUAso0odbOaCDj3Q==",
+      "path": "microsoft.extensions.primitives/7.0.0",
+      "hashPath": "microsoft.extensions.primitives.7.0.0.nupkg.sha512"
+    },
+    "Open.Collections/4.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Rg0aFXetZGCyZvCnQ8TmmicV1i/18ucibN89cPIznqUTQnuNAbSmy8Z9Hwjta56H0GOTRCnuOHhn2hKno7tlgw==",
+      "path": "open.collections/4.0.1",
+      "hashPath": "open.collections.4.0.1.nupkg.sha512"
+    },
+    "Open.Disposable/3.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-EK4gzpBsBEaKCvgOkEcxE+yK+WeaIgKJAxu/lLKgQelxcLGTnwLm2swuRcaAausHitK8VwKnVdVQ8JPyMVhtvQ==",
+      "path": "open.disposable/3.0.1",
+      "hashPath": "open.disposable.3.0.1.nupkg.sha512"
+    },
+    "Open.Disposable.ObjectPools/3.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-F9r/WFaHyTUHhffgA2vdjiPZ0cdNM8U2QEVc7lHJ5i1i7AnAmVgA4siqvf/Xnz3c2ZvCGRTMfL1ucaIuqqASbw==",
+      "path": "open.disposable.objectpools/3.0.1",
+      "hashPath": "open.disposable.objectpools.3.0.1.nupkg.sha512"
+    },
+    "Open.Numeric.Primes/4.0.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-GT88u5/PBUZT+80a3nYtT+4rb1jpPDzQ7iq4TR3MpplcqNFtfuU5shX9keGF3kA/s5gCM2vjuUmnxwiRDs0ssw==",
+      "path": "open.numeric.primes/4.0.4",
+      "hashPath": "open.numeric.primes.4.0.4.nupkg.sha512"
+    },
+    "Open.Text/9.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-biysFpEq8O+VkwAXlAKkWAfckeWFJVeYGUZwV7I+joIrhbR3oPx1oCnXG9kgSe5WFyQoCFkAOCtxGP5CVIuxhg==",
+      "path": "open.text/9.0.0",
+      "hashPath": "open.text.9.0.0.nupkg.sha512"
+    },
+    "Open.Threading/3.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-rw01XLG6sdmhfRWB7Rrj0dj6qQvipDCx4l0fDnjYCLy+7e4FpZc5Dj+5BNv0vqnF/eSAr8xpfpFvpLolKLVFcQ==",
+      "path": "open.threading/3.0.3",
+      "hashPath": "open.threading.3.0.3.nupkg.sha512"
+    },
+    "Open.Threading.ReadWrite/3.0.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QR0CVjlAr34eoI24WTXKjHSM26st5uzHFmuYZbltJS84HIfEDbpsng1kmlNcIsq+impygIu4gqxhJcsA7fYKFw==",
+      "path": "open.threading.readwrite/3.0.1",
+      "hashPath": "open.threading.readwrite.3.0.1.nupkg.sha512"
+    },
+    "Open.Threading.ReadWriteHelper/3.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-HlYmoE2n2zqejCbkuz5D8aYQRUs9PtFMrzhNgKpLiUKEe/YKw3vmfpV4KCIk0OsPVc0dxRcvyVkoBsR6D9CU3A==",
+      "path": "open.threading.readwritehelper/3.0.2",
+      "hashPath": "open.threading.readwritehelper.3.0.2.nupkg.sha512"
+    },
+    "Open.Threading.Tasks/1.2.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ecjvV9sI8F1zD0p5PYIscdMrkNr6zKYUpk8VIDpCq+kzNHWrhxrWE3YPpNrPCVJkrOqUoMaWj7tvB+BdLvt8OQ==",
+      "path": "open.threading.tasks/1.2.2",
+      "hashPath": "open.threading.tasks.1.2.2.nupkg.sha512"
+    },
+    "System.Collections.Immutable/8.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-AurL6Y5BA1WotzlEvVaIDpqzpIPvYnnldxru8oXJU2yFxFUy3+pNXjXd1ymO+RA0rq0+590Q8gaz2l3Sr7fmqg==",
+      "path": "system.collections.immutable/8.0.0",
+      "hashPath": "system.collections.immutable.8.0.0.nupkg.sha512"
+    },
+    "System.Threading.Channels/8.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-CMaFr7v+57RW7uZfZkPExsPB6ljwzhjACWW1gfU35Y56rk72B/Wu+sTqxVmGSk4SFUlPc3cjeKND0zktziyjBA==",
+      "path": "system.threading.channels/8.0.0",
+      "hashPath": "system.threading.channels.8.0.0.nupkg.sha512"
+    }
+  }
+}

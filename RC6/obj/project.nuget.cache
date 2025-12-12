@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "JtBKV0BSOuk=",
+  "dgSpecHash": "6MgMri1iqeo=",
   "success": true,
-  "projectFilePath": "/home/max_d/prog/crypto/KURSACH/RC6/RC6.csproj",
+  "projectFilePath": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/RC6/RC6.csproj",
   "expectedPackageFiles": [
     "/home/max_d/.nuget/packages/microsoft.codecoverage/17.3.2/microsoft.codecoverage.17.3.2.nupkg.sha512",
     "/home/max_d/.nuget/packages/microsoft.csharp/4.0.1/microsoft.csharp.4.0.1.nupkg.sha512",

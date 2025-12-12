@@ -68,6 +68,7 @@ namespace DiffieHellman
             do
             {
                 rng.GetBytes(bytes);
+                bytes[bytes.Length - 1] &= (byte)0x7F; // Ensure positive
                 privateKey = new BigInteger(bytes);
             } while (privateKey <= 1 || privateKey >= _p - 1);
 

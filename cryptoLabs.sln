@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer", "ChatServer\ChatServer.csproj", "{4E126C31-8749-4BCE-890E-8C1C26A9F298}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CipherModes", "CipherModes\CipherModes.csproj", "{2ABD9FC3-FA79-49BE-861D-0BEC2F042EC1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LOKI97", "LOKI97\LOKI97.csproj", "{41BA28E6-E561-40ED-B496-7F76F10ECAD5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RC6", "RC6\RC6.csproj", "{745099E5-B26E-47E1-A172-BF65FC219288}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer.Tests", "ChatServer.Tests\ChatServer.Tests.csproj", "{D25E4DA1-0198-4373-A671-331BF8D6D5BD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiffieHellman", "Diffie-Hellman\DiffieHellman.csproj", "{40EDA282-6F3C-48B4-9A52-3976C3339F03}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E126C31-8749-4BCE-890E-8C1C26A9F298}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E126C31-8749-4BCE-890E-8C1C26A9F298}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E126C31-8749-4BCE-890E-8C1C26A9F298}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E126C31-8749-4BCE-890E-8C1C26A9F298}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2ABD9FC3-FA79-49BE-861D-0BEC2F042EC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2ABD9FC3-FA79-49BE-861D-0BEC2F042EC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2ABD9FC3-FA79-49BE-861D-0BEC2F042EC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2ABD9FC3-FA79-49BE-861D-0BEC2F042EC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41BA28E6-E561-40ED-B496-7F76F10ECAD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41BA28E6-E561-40ED-B496-7F76F10ECAD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41BA28E6-E561-40ED-B496-7F76F10ECAD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41BA28E6-E561-40ED-B496-7F76F10ECAD5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{745099E5-B26E-47E1-A172-BF65FC219288}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{745099E5-B26E-47E1-A172-BF65FC219288}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{745099E5-B26E-47E1-A172-BF65FC219288}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{745099E5-B26E-47E1-A172-BF65FC219288}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D25E4DA1-0198-4373-A671-331BF8D6D5BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D25E4DA1-0198-4373-A671-331BF8D6D5BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D25E4DA1-0198-4373-A671-331BF8D6D5BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D25E4DA1-0198-4373-A671-331BF8D6D5BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{40EDA282-6F3C-48B4-9A52-3976C3339F03}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{40EDA282-6F3C-48B4-9A52-3976C3339F03}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{40EDA282-6F3C-48B4-9A52-3976C3339F03}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{40EDA282-6F3C-48B4-9A52-3976C3339F03}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = LOKI97
-build_property.ProjectDir = /home/max_d/prog/crypto/KURSACH/LOKI97/
+build_property.ProjectDir = /home/max_d/prog/crypto/KURSACH/cryptoLabs/LOKI97/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

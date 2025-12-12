@@ -3899,11 +3899,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/max_d/prog/crypto/KURSACH/RC6/RC6.csproj",
+      "projectUniqueName": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/RC6/RC6.csproj",
       "projectName": "RC6",
-      "projectPath": "/home/max_d/prog/crypto/KURSACH/RC6/RC6.csproj",
+      "projectPath": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/RC6/RC6.csproj",
       "packagesPath": "/home/max_d/.nuget/packages/",
-      "outputPath": "/home/max_d/prog/crypto/KURSACH/RC6/obj/",
+      "outputPath": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/RC6/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/max_d/.nuget/NuGet/NuGet.Config"
@@ -3918,8 +3918,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/home/max_d/prog/crypto/KURSACH/CipherModes/CipherModes.csproj": {
-              "projectPath": "/home/max_d/prog/crypto/KURSACH/CipherModes/CipherModes.csproj"
+            "/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/CipherModes.csproj": {
+              "projectPath": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/CipherModes.csproj"
             }
           }
         }

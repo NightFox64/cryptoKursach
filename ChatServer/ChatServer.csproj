@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.21" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CipherModes\CipherModes.csproj" />
+    <ProjectReference Include="..\LOKI97\LOKI97.csproj" />
+    <ProjectReference Include="..\RC6\RC6.csproj" />
+    <ProjectReference Include="..\Diffie-Hellman\DiffieHellman.csproj" />
+  </ItemGroup>
+
+</Project>

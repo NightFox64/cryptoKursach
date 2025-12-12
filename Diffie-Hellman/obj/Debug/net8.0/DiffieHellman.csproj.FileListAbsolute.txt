@@ -1,0 +1,13 @@
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/DiffieHellman.csproj.AssemblyReference.cache
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/DiffieHellman.GeneratedMSBuildEditorConfig.editorconfig
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/DiffieHellman.AssemblyInfoInputs.cache
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/DiffieHellman.AssemblyInfo.cs
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/DiffieHellman.csproj.CoreCompileInputs.cache
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/DiffieHellman.sourcelink.json
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/bin/Debug/net8.0/DiffieHellman.deps.json
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/bin/Debug/net8.0/DiffieHellman.dll
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/bin/Debug/net8.0/DiffieHellman.pdb
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/DiffieHellman.dll
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/refint/DiffieHellman.dll
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/DiffieHellman.pdb
+/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/ref/DiffieHellman.dll

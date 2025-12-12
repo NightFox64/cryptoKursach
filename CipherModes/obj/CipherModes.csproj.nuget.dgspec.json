@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/home/max_d/prog/crypto/KURSACH/CipherModes/CipherModes.csproj": {}
+    "/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/CipherModes.csproj": {}
   },
   "projects": {
-    "/home/max_d/prog/crypto/KURSACH/CipherModes/CipherModes.csproj": {
+    "/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/CipherModes.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/home/max_d/prog/crypto/KURSACH/CipherModes/CipherModes.csproj",
+        "projectUniqueName": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/CipherModes.csproj",
         "projectName": "CipherModes",
-        "projectPath": "/home/max_d/prog/crypto/KURSACH/CipherModes/CipherModes.csproj",
+        "projectPath": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/CipherModes.csproj",
         "packagesPath": "/home/max_d/.nuget/packages/",
-        "outputPath": "/home/max_d/prog/crypto/KURSACH/CipherModes/obj/",
+        "outputPath": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/home/max_d/.nuget/NuGet/NuGet.Config"

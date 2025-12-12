@@ -45,20 +45,15 @@ namespace DiffieHellman
             var rng = RandomNumberGenerator.Create();
             var range = maxValue - minValue;
             int length = range.ToByteArray().Length;
-
-            // Generate a random number that is almost certainly less than or equal to `range`
             byte[] bytes = new byte[length];
-            rng.GetBytes(bytes);
-            bytes[bytes.Length - 1] &= (byte)0x7F; // Ensure positive
-            var result = new BigInteger(bytes);
+            BigInteger result;
 
-            // If it's still too large, we can just try again
-            while (result >= range)
+            do
             {
                 rng.GetBytes(bytes);
                 bytes[bytes.Length - 1] &= (byte)0x7F; // Ensure positive
                 result = new BigInteger(bytes);
-            }
+            } while (result >= range);
 
             return result + minValue;
         }

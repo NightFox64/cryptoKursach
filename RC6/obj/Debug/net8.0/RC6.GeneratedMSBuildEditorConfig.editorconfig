@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = RC6
-build_property.ProjectDir = /home/max_d/prog/crypto/KURSACH/RC6/
+build_property.ProjectDir = /home/max_d/prog/crypto/KURSACH/cryptoLabs/RC6/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

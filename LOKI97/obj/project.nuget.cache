@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "KuYQhfysRhk=",
+  "dgSpecHash": "gLRA4VqI6sY=",
   "success": true,
-  "projectFilePath": "/home/max_d/prog/crypto/KURSACH/LOKI97/LOKI97.csproj",
+  "projectFilePath": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/LOKI97/LOKI97.csproj",
   "expectedPackageFiles": [
     "/home/max_d/.nuget/packages/microsoft.codecoverage/17.3.2/microsoft.codecoverage.17.3.2.nupkg.sha512",
     "/home/max_d/.nuget/packages/microsoft.csharp/4.0.1/microsoft.csharp.4.0.1.nupkg.sha512",
