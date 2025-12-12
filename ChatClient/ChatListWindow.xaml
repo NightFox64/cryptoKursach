@@ -1,0 +1,40 @@
+<Window x:Class="ChatClient.ChatListWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ChatClient"
+        mc:Ignorable="d"
+        Title="Chats" Height="450" Width="800"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Contacts and Chats List -->
+        <TabControl Grid.Column="0">
+            <TabItem Header="Contacts">
+                <StackPanel>
+                    <Button Content="Add Contact" Margin="5"/>
+                    <ListBox x:Name="ContactsListBox" Height="300" Margin="5"/>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Chats">
+                <StackPanel>
+                    <Button Content="Create Chat" Margin="5"/>
+                    <ListBox x:Name="ChatsListBox" Height="300" Margin="5" SelectionChanged="ChatsListBox_SelectionChanged"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <!-- Chat Display Area (placeholder for now) -->
+        <Border Grid.Column="1" BorderBrush="LightGray" BorderThickness="1" Margin="5">
+            <TextBlock Text="Select a chat or contact to begin" 
+                       VerticalAlignment="Center" 
+                       HorizontalAlignment="Center" 
+                       Foreground="Gray"/>
+        </Border>
+    </Grid>
+</Window>

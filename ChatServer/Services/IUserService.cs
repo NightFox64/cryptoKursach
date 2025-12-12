@@ -8,6 +8,6 @@ namespace ChatServer.Services
         User? GetById(int id);
         User? GetByLogin(string login);
         User Create(User user, string? password);
-        bool Authenticate(string? login, string? password);
+        User? Authenticate(string? login, string? password);
     }
 }

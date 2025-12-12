@@ -13,6 +13,8 @@ namespace DiffieHellman
         public BigInteger P => _p;
         public BigInteger G => _g;
 
+        public BigInteger PrivateKey => _privateKey;
+
         public DiffieHellman(int keySize)
         {
             GenerateParameters(keySize);
@@ -25,6 +27,14 @@ namespace DiffieHellman
             _p = p;
             _g = g;
             _privateKey = GeneratePrivateKey();
+            PublicKey = BigInteger.ModPow(_g, _privateKey, _p);
+        }
+
+        public DiffieHellman(BigInteger p, BigInteger g, BigInteger privateKey)
+        {
+            _p = p;
+            _g = g;
+            _privateKey = privateKey;
             PublicKey = BigInteger.ModPow(_g, _privateKey, _p);
         }
 

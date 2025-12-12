@@ -1,0 +1,31 @@
+<Window x:Class="ChatClient.AlgorithmSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ChatClient"
+        mc:Ignorable="d"
+        Title="Algorithm Settings" Height="300" Width="350"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="200">
+            <Label Content="Cipher Algorithm" HorizontalAlignment="Center" FontSize="16"/>
+            <ComboBox x:Name="CipherAlgorithmComboBox" Margin="0,5,0,0">
+                <ComboBoxItem Content="LOKI97"/>
+                <ComboBoxItem Content="RC6"/>
+            </ComboBox>
+            <Label Content="Encryption Mode" HorizontalAlignment="Center" FontSize="16"/>
+            <ComboBox x:Name="EncryptionModeComboBox" Margin="0,5,0,0">
+                <ComboBoxItem Content="ECB"/>
+                <ComboBoxItem Content="CBC"/>
+                <ComboBoxItem Content="PCBC"/>
+                <ComboBoxItem Content="CFB"/>
+                <ComboBoxItem Content="OFB"/>
+                <ComboBoxItem Content="CTR"/>
+                <ComboBoxItem Content="Random Delta"/>
+            </ComboBox>
+            <Button x:Name="SaveButton" Content="Save" Margin="0,20,0,0" Height="30" Click="SaveButton_Click"/>
+            <Button x:Name="CancelButton" Content="Cancel" Margin="0,10,0,0" Height="30" Click="CancelButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

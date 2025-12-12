@@ -34,10 +34,10 @@ namespace ChatServer.Controllers
         [HttpPost("login")]
         public IActionResult Login(LoginDto model)
         {
-            var authenticated = _userService.Authenticate(model.Login, model.Password);
-            if (authenticated)
+            var user = _userService.Authenticate(model.Login, model.Password);
+            if (user != null)
             {
-                return Ok();
+                return Ok(new { UserId = user.Id });
             }
 
             return Unauthorized();

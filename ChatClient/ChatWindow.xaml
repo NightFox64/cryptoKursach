@@ -1,0 +1,67 @@
+<Window x:Class="ChatClient.ChatWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ChatClient"
+        xmlns:converters="clr-namespace:ChatClient.Converters"
+        mc:Ignorable="d"
+        Title="Chat" Height="450" Width="600"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <converters:MessageTypeToTemplateConverter x:Key="MessageTypeConverter">
+            <converters:MessageTypeToTemplateConverter.TextMessageTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Content}" TextWrapping="Wrap" HorizontalAlignment="{Binding HorizontalAlignment}"/>
+                </DataTemplate>
+            </converters:MessageTypeToTemplateConverter.TextMessageTemplate>
+            <converters:MessageTypeToTemplateConverter.ImageMessageTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <TextBlock Text="Image:" HorizontalAlignment="{Binding HorizontalAlignment}"/>
+                        <Image Source="{Binding Content}" MaxHeight="100"/>
+                    </StackPanel>
+                </DataTemplate>
+            </converters:MessageTypeToTemplateConverter.ImageMessageTemplate>
+            <converters:MessageTypeToTemplateConverter.FileMessageTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <TextBlock Text="File:" HorizontalAlignment="{Binding HorizontalAlignment}"/>
+                        <Button Content="Download File" CommandParameter="{Binding Content}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </converters:MessageTypeToTemplateConverter.FileMessageTemplate>
+        </converters:MessageTypeToTemplateConverter>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Menu Bar -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="Settings">
+                <MenuItem Header="Algorithm Settings" Click="AlgorithmSettings_Click"/>
+            </MenuItem>
+            <MenuItem Header="File">
+                <MenuItem Header="Select File" Click="SelectFile_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Chat History -->
+        <ListBox x:Name="ChatHistoryListBox" Grid.Row="1" Margin="5" ItemTemplateSelector="{StaticResource MessageTypeConverter}"/>
+
+        <!-- Message Input -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="5">
+            <TextBox x:Name="MessageTextBox" Width="400" Height="30"/>
+            <Button Content="Send" Width="80" Height="30" Margin="5,0,0,0" Click="SendButton_Click"/>
+            <Button Content="Attach" Width="80" Height="30" Margin="5,0,0,0" Click="AttachFile_Click"/>
+        </StackPanel>
+
+        <!-- Progress Bar (for file transfers, etc.) -->
+        <ProgressBar x:Name="TransferProgressBar" Grid.Row="3" Height="10" Margin="5" Visibility="Collapsed"/>
+    </Grid>
+</Window>

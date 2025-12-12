@@ -12,21 +12,25 @@ namespace ChatServer.Services
         private List<User> _users = new List<User>();
         private int _nextId = 1;
 
-        public bool Authenticate(string? login, string? password)
+        public User? Authenticate(string? login, string? password)
         {
             if (login == null || password == null)
             {
-                return false;
+                return null;
             }
 
             var user = GetByLogin(login);
-            if (user == null || user.Salt == null)
+            if (user == null || user.Salt == null || user.PasswordHash == null)
             {
-                return false;
+                return null;
             }
 
             var passwordHash = HashPassword(password, user.Salt);
-            return user.PasswordHash == passwordHash;
+            if (user.PasswordHash == passwordHash)
+            {
+                return user;
+            }
+            return null;
         }
 
         public User Create(User user, string? password)
