@@ -104,7 +104,7 @@ namespace ChatClient.Services
             return new PKCS7Padding();
         }
 
-        private IEncryptionMode GetEncryptionMode(IBlockCipher blockCipher, IPaddingMode padding)
+        private IEncryptionMode GetEncryptionMode(IBlockCipher blockCipher, IPaddingMode? padding)
         {
             switch (CurrentMode)
             {

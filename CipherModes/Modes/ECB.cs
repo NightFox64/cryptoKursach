@@ -5,9 +5,9 @@ namespace CipherModes.Modes
     public class ECB : IEncryptionMode
     {
         private readonly IBlockCipher _cipher;
-        private readonly IPaddingMode _padding;
+        private readonly IPaddingMode? _padding;
 
-        public ECB(IBlockCipher cipher, IPaddingMode padding)
+        public ECB(IBlockCipher cipher, IPaddingMode? padding)
         {
             _cipher = cipher;
             _padding = padding;
@@ -18,9 +18,13 @@ namespace CipherModes.Modes
             _cipher.SetKey(key);
         }
 
-        public byte[] Encrypt(byte[] data)
+        public byte[] Encrypt(byte[]? data)
         {
-            data = _padding.AddPadding(data, _cipher.GetBlockSize());
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (_padding != null)
+            {
+                data = _padding.AddPadding(data, _cipher.GetBlockSize());
+            }
             var result = new byte[data.Length];
 
             for (int i = 0; i < data.Length; i += _cipher.GetBlockSize())
@@ -34,8 +38,9 @@ namespace CipherModes.Modes
             return result;
         }
 
-        public byte[] Decrypt(byte[] data)
+        public byte[] Decrypt(byte[]? data)
         {
+            if (data == null) throw new ArgumentNullException(nameof(data));
             var result = new byte[data.Length];
 
             for (int i = 0; i < data.Length; i += _cipher.GetBlockSize())
@@ -46,7 +51,11 @@ namespace CipherModes.Modes
                 Array.Copy(decryptedBlock, 0, result, i, _cipher.GetBlockSize());
             }
 
-            return _padding.RemovePadding(result, _cipher.GetBlockSize());
+            if (_padding != null)
+            {
+                return _padding.RemovePadding(result, _cipher.GetBlockSize());
+            }
+            return result;
         }
     }
 }

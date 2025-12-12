@@ -1,16 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\CipherModes\CipherModes.csproj" />
     <ProjectReference Include="..\Diffie-Hellman\DiffieHellman.csproj" />
     <ProjectReference Include="..\LOKI97\LOKI97.csproj" />
     <ProjectReference Include="..\RC6\RC6.csproj" />
-    <ProjectReference Include="..\ChatServer\ChatServer.csproj" />
     <ProjectReference Include="..\ChatClient.Shared\ChatClient.Shared.csproj" />
+    <ProjectReference Include="..\ChatServer\ChatServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SQLite" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

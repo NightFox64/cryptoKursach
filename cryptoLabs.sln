@@ -15,11 +15,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer.Tests", "ChatSer
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiffieHellman", "Diffie-Hellman\DiffieHellman.csproj", "{40EDA282-6F3C-48B4-9A52-3976C3339F03}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient", "ChatClient\ChatClient.csproj", "{B2423801-1361-4ECF-A01B-8F51BFBF64AD}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient.UnitTests", "ChatClient.UnitTests\ChatClient.UnitTests.csproj", "{F3EEBBC8-839C-4D3E-A9A2-5EAEA5C2CDA9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient.Shared", "ChatClient.Shared\ChatClient.Shared.csproj", "{24814726-0F49-4CEF-BFCC-4BABCB190FFE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient", "ChatClient\ChatClient.csproj", "{7E45D4C6-81D0-4B7E-A87D-4FCC5451D944}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,10 +54,6 @@ Global
 		{40EDA282-6F3C-48B4-9A52-3976C3339F03}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40EDA282-6F3C-48B4-9A52-3976C3339F03}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40EDA282-6F3C-48B4-9A52-3976C3339F03}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B2423801-1361-4ECF-A01B-8F51BFBF64AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B2423801-1361-4ECF-A01B-8F51BFBF64AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B2423801-1361-4ECF-A01B-8F51BFBF64AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B2423801-1361-4ECF-A01B-8F51BFBF64AD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F3EEBBC8-839C-4D3E-A9A2-5EAEA5C2CDA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F3EEBBC8-839C-4D3E-A9A2-5EAEA5C2CDA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F3EEBBC8-839C-4D3E-A9A2-5EAEA5C2CDA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -66,5 +62,9 @@ Global
 		{24814726-0F49-4CEF-BFCC-4BABCB190FFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24814726-0F49-4CEF-BFCC-4BABCB190FFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24814726-0F49-4CEF-BFCC-4BABCB190FFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E45D4C6-81D0-4B7E-A87D-4FCC5451D944}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E45D4C6-81D0-4B7E-A87D-4FCC5451D944}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E45D4C6-81D0-4B7E-A87D-4FCC5451D944}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E45D4C6-81D0-4B7E-A87D-4FCC5451D944}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

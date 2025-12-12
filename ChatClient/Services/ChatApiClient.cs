@@ -1,13 +1,13 @@
 using ChatClient.Models.DTO; // Use client DTOs
-using ChatServer.Models.DTO;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Numerics;
 using System.Collections.Generic;
-using ChatServer.Models;
+using ChatServer.Models; // For ChatServer.Models.Chat and ChatServer.Models.Message
 using ChatClient.Shared; // Use IChatApiClient from shared project
+using System.Net.Http.Headers;
 
 namespace ChatClient.Services
 {
@@ -25,7 +25,7 @@ namespace ChatClient.Services
         public async Task<bool> Register(string login, string password)
         {
             var registerDto = new RegisterDto { Login = login, Password = password };
-            var content = new StringContent(JsonSerializer.Serialize(registerDto), Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonSerializer.Serialize(registerDto), Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
             var response = await _httpClient.PostAsync("/Users/register", content);
             return response.IsSuccessStatusCode;
         }
@@ -33,7 +33,7 @@ namespace ChatClient.Services
         public async Task<int?> Login(string login, string password)
         {
             var loginDto = new LoginDto { Login = login, Password = password };
-            var content = new StringContent(JsonSerializer.Serialize(loginDto), Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonSerializer.Serialize(loginDto), Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
             var response = await _httpClient.PostAsync("/Users/login", content);
             if (response.IsSuccessStatusCode)
             {
@@ -74,7 +74,7 @@ namespace ChatClient.Services
         public async Task<int?> CreateChat(string name, int initialUserId)
         {
             var createChatDto = new CreateChatDto { Name = name, InitialUserId = initialUserId };
-            var content = new StringContent(JsonSerializer.Serialize(createChatDto), Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonSerializer.Serialize(createChatDto), Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
             var response = await _httpClient.PostAsync("/Chats/create", content);
             response.EnsureSuccessStatusCode();
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -108,7 +108,7 @@ namespace ChatClient.Services
                 UserId = userId,
                 PublicKey = clientPublicKey.ToString()
             };
-            var content = new StringContent(JsonSerializer.Serialize(sessionKeyRequest), Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonSerializer.Serialize(sessionKeyRequest), Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
             var response = await _httpClient.PostAsync("/Keys/requestSessionKey", content);
             response.EnsureSuccessStatusCode();
 
@@ -124,13 +124,13 @@ namespace ChatClient.Services
 
         public async Task<bool> SendEncryptedFragment(int chatId, int senderId, string encryptedContent)
         {
-            var message = new Message
+            var message = new ChatServer.Models.Message
             {
                 ChatId = chatId,
                 SenderId = senderId,
                 Content = encryptedContent
             };
-            var content = new StringContent(JsonSerializer.Serialize(message), Encoding.UTF8, "application/json");
+            var content = new StringContent(JsonSerializer.Serialize(message), Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
             var response = await _httpClient.PostAsync("/Messages/send", content);
             return response.IsSuccessStatusCode;
         }
@@ -140,7 +140,7 @@ namespace ChatClient.Services
             var response = await _httpClient.GetAsync($"/Messages/receive?chatId={chatId}&lastDeliveryId={lastDeliveryId}");
             response.EnsureSuccessStatusCode();
             var responseContent = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<Message>(responseContent);
+            return JsonSerializer.Deserialize<ChatServer.Models.Message>(responseContent);
         }
     }
 }

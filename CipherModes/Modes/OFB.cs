@@ -5,10 +5,10 @@ namespace CipherModes.Modes
     public class OFB : IEncryptionMode
     {
         private readonly IBlockCipher _cipher;
-        private readonly IPaddingMode _padding;
+        private readonly IPaddingMode? _padding;
         private byte[]? _iv;
 
-        public OFB(IBlockCipher cipher, IPaddingMode padding)
+        public OFB(IBlockCipher cipher, IPaddingMode? padding)
         {
             _cipher = cipher;
             _padding = padding;
@@ -20,8 +20,10 @@ namespace CipherModes.Modes
             _iv = iv ?? new byte[_cipher.GetBlockSize()];
         }
 
-        public byte[] Encrypt(byte[] data)
+        public byte[] Encrypt(byte[]? data)
         {
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (_iv == null) throw new InvalidOperationException("IV is not set.");
             var result = new byte[data.Length];
             var previousBlock = new byte[_iv.Length];
             Array.Copy(_iv, previousBlock, _iv.Length);
@@ -40,8 +42,10 @@ namespace CipherModes.Modes
             return result;
         }
 
-        public byte[] Decrypt(byte[] data)
+        public byte[] Decrypt(byte[]? data)
         {
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (_iv == null) throw new InvalidOperationException("IV is not set.");
             var result = new byte[data.Length];
             var previousBlock = new byte[_iv.Length];
             Array.Copy(_iv, previousBlock, _iv.Length);
