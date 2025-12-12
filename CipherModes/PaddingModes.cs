@@ -1,0 +1,125 @@
+using System;
+using System.Security.Cryptography;
+
+namespace CipherModes
+{
+    public class ZerosPadding : IPaddingMode
+    {
+        public byte[] AddPadding(byte[] data, int blockSize)
+        {
+            int paddingLength = blockSize - (data.Length % blockSize);
+            if (paddingLength == 0) return data;
+            
+            byte[] padded = new byte[data.Length + paddingLength];
+            Array.Copy(data, padded, data.Length);
+            return padded;
+        }
+
+        public byte[] RemovePadding(byte[] data, int blockSize)
+        {
+            int i = data.Length - 1;
+            while (i >= 0 && data[i] == 0) i--;
+            
+            byte[] result = new byte[i + 1];
+            Array.Copy(data, result, i + 1);
+            return result;
+        }
+    }
+
+    public class ANSIX923Padding : IPaddingMode
+    {
+        public byte[] AddPadding(byte[] data, int blockSize)
+        {
+            int paddingLength = blockSize - (data.Length % blockSize);
+            if (paddingLength == 0) paddingLength = blockSize;
+            
+            byte[] padded = new byte[data.Length + paddingLength];
+            Array.Copy(data, padded, data.Length);
+            
+            padded[padded.Length - 1] = (byte)paddingLength;
+            return padded;
+        }
+
+        public byte[] RemovePadding(byte[] data, int blockSize)
+        {
+            byte paddingLength = data[data.Length - 1];
+            if (paddingLength > blockSize || paddingLength == 0)
+                throw new ArgumentException("Invalid padding");
+
+            for (int i = data.Length - paddingLength; i < data.Length - 1; i++)
+            {
+                if (data[i] != 0)
+                    throw new ArgumentException("Invalid padding");
+            }
+            
+            byte[] result = new byte[data.Length - paddingLength];
+            Array.Copy(data, result, result.Length);
+            return result;
+        }
+    }
+
+    public class PKCS7Padding : IPaddingMode
+    {
+        public byte[] AddPadding(byte[] data, int blockSize)
+        {
+            int paddingLength = blockSize - (data.Length % blockSize);
+            if (paddingLength == 0) paddingLength = blockSize;
+            
+            byte[] padded = new byte[data.Length + paddingLength];
+            Array.Copy(data, padded, data.Length);
+            
+            for (int i = data.Length; i < padded.Length; i++)
+                padded[i] = (byte)paddingLength;
+            
+            return padded;
+        }
+
+        public byte[] RemovePadding(byte[] data, int blockSize)
+        {
+            byte paddingLength = data[data.Length - 1];
+            if (paddingLength > blockSize || paddingLength == 0)
+                throw new ArgumentException("Invalid padding");
+            
+            for (int i = data.Length - paddingLength; i < data.Length; i++)
+                if (data[i] != paddingLength)
+                    throw new ArgumentException("Invalid padding");
+            
+            byte[] result = new byte[data.Length - paddingLength];
+            Array.Copy(data, result, result.Length);
+            return result;
+        }
+    }
+
+    public class ISO10126Padding : IPaddingMode
+    {
+        public byte[] AddPadding(byte[] data, int blockSize)
+        {
+            int paddingLength = blockSize - (data.Length % blockSize);
+            if (paddingLength == 0) paddingLength = blockSize;
+            
+            byte[] padded = new byte[data.Length + paddingLength];
+            Array.Copy(data, padded, data.Length);
+            
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                byte[] randomBytes = new byte[paddingLength - 1];
+                rng.GetBytes(randomBytes);
+                Array.Copy(randomBytes, 0, padded, data.Length, paddingLength - 1);
+            }
+            
+            padded[padded.Length - 1] = (byte)paddingLength;
+            return padded;
+        }
+
+        public byte[] RemovePadding(byte[] data, int blockSize)
+        {
+            byte paddingLength = data[data.Length - 1];
+            if (paddingLength > blockSize || paddingLength == 0)
+                throw new ArgumentException("Invalid padding");
+            
+            byte[] result = new byte[data.Length - paddingLength];
+            Array.Copy(data, result, result.Length);
+            return result;
+        }
+    }
+}
