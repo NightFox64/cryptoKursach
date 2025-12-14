@@ -3,6 +3,7 @@ using DiffieHellman;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Numerics;
+using System.Threading.Tasks; // Added
 using ChatClient.Shared.Models.DTO;
 
 namespace ChatServer.Controllers
@@ -19,21 +20,24 @@ namespace ChatServer.Controllers
         }
 
         [HttpPost("requestSessionKey")]
-        public IActionResult RequestSessionKey(SessionKeyRequestDto model)
+        public async Task<IActionResult> RequestSessionKey(SessionKeyRequestDto model)
         {
             try
             {
-                // For simplicity, we'll use pre-defined DH parameters.
-                // In a real application, the server should have its own long-term DH parameters
-                // or they should be agreed upon in a secure way.
-                // I will generate a new DH instance with 1024-bit key size.
-                var serverDh = new DiffieHellman.DiffieHellman(1024);
-                var clientPublicKey = BigInteger.Parse(model.PublicKey ?? throw new InvalidOperationException("Public key cannot be null."));
+                BigInteger clientPublicKey = BigInteger.Parse(model.PublicKey ?? throw new InvalidOperationException("Public key cannot be null."));
 
-                var sharedSecret = serverDh.GetSharedSecret(clientPublicKey);
-                _sessionKeyService.StoreSharedSecret(model.ChatId, model.UserId, sharedSecret, serverDh.P, serverDh.G);
+                // Delegate key exchange initiation to SessionKeyService
+                var result = await _sessionKeyService.InitiateKeyExchange(model.ChatId, model.UserId, clientPublicKey);
 
-                return Ok(new { serverPublicKey = serverDh.PublicKey.ToString(), p = serverDh.P.ToString(), g = serverDh.G.ToString() });
+                if (result.HasValue)
+                {
+                    var (serverPublicKey, p, g) = result.Value;
+                    return Ok(new { serverPublicKey = serverPublicKey.ToString(), p = p.ToString(), g = g.ToString() });
+                }
+                else
+                {
+                    return BadRequest(new { message = "Failed to initiate key exchange." });
+                }
             }
             catch (Exception ex)
             {

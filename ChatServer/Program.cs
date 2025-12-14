@@ -14,7 +14,7 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IChatService, ChatService>();
-builder.Services.AddSingleton<IMessageBrokerService, MessageBrokerService>();
+builder.Services.AddScoped<IMessageBrokerService, MessageBrokerService>();
 builder.Services.AddScoped<ISessionKeyService, SessionKeyService>();
 
 // Register ApplicationDbContext with SQLite

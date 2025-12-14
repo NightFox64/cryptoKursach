@@ -1,13 +1,13 @@
+using ChatServer.Models; // Changed from ChatClient.Shared.Models
 using System.Collections.Generic;
-using ChatClient.Shared.Models;
+using System.Threading.Tasks;
 
 namespace ChatServer.Services
 {
     public interface IMessageBrokerService
     {
-        void CreateQueue(int chatId);
-        void DeleteQueue(int chatId);
-        void SendMessage(Message message);
-        Message? ReceiveMessage(int chatId, long lastDeliveryId);
+        Task SendMessage(Message message);
+        Task<Message?> ReceiveMessage(int chatId, long lastDeliveryId);
+        Task<List<Message>> GetChatHistory(int chatId);
     }
 }

@@ -1,55 +1,50 @@
+using ChatServer.Models; // Changed from ChatClient.Shared.Models
+using ChatServer.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using ChatClient.Shared.Models;
+using System.Threading.Tasks;
 
 namespace ChatServer.Services
 {
     public class MessageBrokerService : IMessageBrokerService
     {
-        private Dictionary<int, Queue<Message>> _queues = new Dictionary<int, Queue<Message>>();
-        private long _nextDeliveryId = 1;
+        private readonly ApplicationDbContext _context;
 
-        public void CreateQueue(int chatId)
+        public MessageBrokerService(ApplicationDbContext context)
         {
-            if (!_queues.ContainsKey(chatId))
-            {
-                _queues[chatId] = new Queue<Message>();
-            }
+            _context = context;
         }
 
-        public void DeleteQueue(int chatId)
+
+
+        public async Task<Message?> ReceiveMessage(int chatId, long lastDeliveryId)
         {
-            if (_queues.ContainsKey(chatId))
-            {
-                _queues.Remove(chatId);
-            }
+            var message = await _context.Messages
+                                        .Where(m => m.ChatId == chatId && m.Id > lastDeliveryId)
+                                        .OrderBy(m => m.Id)
+                                        .FirstOrDefaultAsync();
+            return message;
         }
 
-        public Message? ReceiveMessage(int chatId, long lastDeliveryId)
+        public async Task<List<Message>> GetChatHistory(int chatId)
         {
-            if (_queues.ContainsKey(chatId))
-            {
-                var queue = _queues[chatId];
-                if (queue.Any())
-                {
-                    var message = queue.Peek();
-                    if (message.DeliveryId > lastDeliveryId)
-                    {
-                        return message;
-                    }
-                }
-            }
-            return null;
+            return await _context.Messages
+                                 .Where(m => m.ChatId == chatId)
+                                 .OrderBy(m => m.Id)
+                                 .ToListAsync();
         }
 
-        public void SendMessage(Message message)
+        public async Task SendMessage(Message message)
         {
-            if (_queues.ContainsKey(message.ChatId))
-            {
-                message.DeliveryId = _nextDeliveryId++;
-                _queues[message.ChatId].Enqueue(message);
-            }
+            // Message ID will be set by the database
+            message.Timestamp = DateTime.UtcNow;
+            
+            _context.Messages.Add(message);
+            await _context.SaveChangesAsync();
+
+            // After saving, the database will assign an Id. Use this as DeliveryId.
+            message.DeliveryId = message.Id;
         }
     }
 }

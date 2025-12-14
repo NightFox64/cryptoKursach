@@ -3,38 +3,37 @@ using System.Globalization;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows;
+using ChatClient.Shared.Models; // Added for Message model
 
 namespace ChatClient.Converters
 {
-    public class MessageTypeToTemplateConverter : IValueConverter
+    public class MessageTypeToTemplateConverter : DataTemplateSelector
     {
         public DataTemplate? TextMessageTemplate { get; set; }
         public DataTemplate? ImageMessageTemplate { get; set; }
         public DataTemplate? FileMessageTemplate { get; set; }
 
-        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public override DataTemplate SelectTemplate(object item, DependencyObject container)
         {
-            if (value is string messageContent)
+            if (item is Message message)
             {
-                if (messageContent.StartsWith("[IMAGE]") && ImageMessageTemplate != null)
+                if (message.Content != null)
                 {
-                    return ImageMessageTemplate;
-                }
-                else if (messageContent.StartsWith("[FILE]") && FileMessageTemplate != null)
-                {
-                    return FileMessageTemplate;
-                }
-                else if (TextMessageTemplate != null)
-                {
-                    return TextMessageTemplate;
+                    if (message.Content.StartsWith("[IMAGE]") && ImageMessageTemplate != null)
+                    {
+                        return ImageMessageTemplate;
+                    }
+                    else if (message.Content.StartsWith("[FILE]") && FileMessageTemplate != null)
+                    {
+                        return FileMessageTemplate;
+                    }
+                    else if (TextMessageTemplate != null)
+                    {
+                        return TextMessageTemplate;
+                    }
                 }
             }
             return TextMessageTemplate; // Default to text, if it's not null
-        }
-
-        public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
         }
     }
 }

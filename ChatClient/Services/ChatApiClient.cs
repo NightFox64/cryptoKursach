@@ -144,6 +144,10 @@ namespace ChatClient.Services
             var response = await _httpClient.GetAsync($"/Messages/receive?chatId={chatId}&lastDeliveryId={lastDeliveryId}");
             response.EnsureSuccessStatusCode();
             var responseContent = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(responseContent) || responseContent == "null")
+            {
+                return null;
+            }
             return JsonSerializer.Deserialize<Message>(responseContent);
         }
 
@@ -173,6 +177,15 @@ namespace ChatClient.Services
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             var chat = JsonSerializer.Deserialize<Chat>(responseContent, options);
             return chat?.Id;
+        }
+
+        public async Task<List<Message>> GetChatHistory(int chatId)
+        {
+            var response = await _httpClient.GetAsync($"/Messages/history?chatId={chatId}");
+            response.EnsureSuccessStatusCode();
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<List<Message>>(responseContent, options) ?? new List<Message>();
         }
     }
 }

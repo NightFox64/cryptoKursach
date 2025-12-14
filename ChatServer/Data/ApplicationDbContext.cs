@@ -19,6 +19,7 @@ namespace ChatServer.Data
         public DbSet<User> Users { get; set; }
         public DbSet<SessionKey> SessionKeys { get; set; } // Add DbSet for SessionKey
         public DbSet<Chat> Chats { get; set; } // Added DbSet for Chat
+        public DbSet<Message> Messages { get; set; } // Added DbSet for Message
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
