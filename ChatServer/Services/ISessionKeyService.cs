@@ -1,5 +1,5 @@
-using ChatServer.Models;
 using System.Numerics;
+using ChatServer.Models; // Explicitly use ChatServer.Models
 
 namespace ChatServer.Services
 {

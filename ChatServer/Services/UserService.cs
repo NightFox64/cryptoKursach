@@ -1,25 +1,37 @@
-using ChatServer.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using ChatServer.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration; // Added for IConfiguration
+using System.IdentityModel.Tokens.Jwt; // Added for JwtSecurityTokenHandler
+using Microsoft.IdentityModel.Tokens; // Added for SymmetricSecurityKey
+using System.Security.Claims; // Added for Claims
+using System.Threading.Tasks; // Added for Task
+using ChatServer.Models;
 
 namespace ChatServer.Services
 {
     public class UserService : IUserService
     {
-        private List<User> _users = new List<User>();
-        private int _nextId = 1;
+        private readonly ApplicationDbContext _context;
+        private readonly IConfiguration _configuration; // Injected IConfiguration
 
-        public User? Authenticate(string? login, string? password)
+        public UserService(ApplicationDbContext context, IConfiguration configuration) // Inject DbContext and IConfiguration
+        {
+            _context = context;
+            _configuration = configuration; // Initialize IConfiguration
+        }
+
+        public async Task<User?> Authenticate(string? login, string? password)
         {
             if (login == null || password == null)
             {
                 return null;
             }
 
-            var user = GetByLogin(login);
+            var user = await _context.Users.Include(u => u.Contacts).FirstOrDefaultAsync(x => x.Login == login);
             if (user == null || user.Salt == null || user.PasswordHash == null)
             {
                 return null;
@@ -33,33 +45,55 @@ namespace ChatServer.Services
             return null;
         }
 
-        public User Create(User user, string? password)
+        public async Task<User> Create(User user, string? password)
         {
             if (password == null)
             {
                 throw new ArgumentNullException(nameof(password));
             }
 
-            if (_users.Any(x => x.Login == user.Login))
+            if (await _context.Users.AnyAsync(x => x.Login == user.Login))
             {
                 throw new Exception("User with login " + user.Login + " already exists");
             }
 
-            user.Id = _nextId++;
             user.Salt = GenerateSalt();
             user.PasswordHash = HashPassword(password, user.Salt);
-            _users.Add(user);
+
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+
             return user;
         }
 
-        public User? GetByLogin(string login)
+        public async Task<User?> GetByLogin(string login)
         {
-            return _users.FirstOrDefault(x => x.Login == login);
+            return await _context.Users.Include(u => u.Contacts).FirstOrDefaultAsync(x => x.Login == login);
         }
 
-        public User? GetById(int id)
+        public async Task<User?> GetById(int id)
         {
-            return _users.FirstOrDefault(x => x.Id == id);
+            return await _context.Users.Include(u => u.Contacts).FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public string GenerateJwtToken(User user)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"]);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, user.Id.ToString()) }),
+                Expires = DateTime.UtcNow.AddDays(7), // Token expires in 7 days
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
+
+        public async Task Update(User user)
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
         }
 
         private byte[] GenerateSalt()

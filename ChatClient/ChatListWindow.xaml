@@ -17,13 +17,13 @@
         <TabControl Grid.Column="0">
             <TabItem Header="Contacts">
                 <StackPanel>
-                    <Button Content="Add Contact" Margin="5"/>
-                    <ListBox x:Name="ContactsListBox" Height="300" Margin="5"/>
+                    <Button Content="Add Contact" Margin="5" Click="AddContactButton_Click"/>
+                    <ListBox x:Name="ContactsListBox" Height="300" Margin="5" SelectionChanged="ContactsListBox_SelectionChanged"/>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Chats">
                 <StackPanel>
-                    <Button Content="Create Chat" Margin="5"/>
+                    <Button Content="Create Chat" Margin="5" Click="CreateChatButton_Click"/>
                     <ListBox x:Name="ChatsListBox" Height="300" Margin="5" SelectionChanged="ChatsListBox_SelectionChanged"/>
                 </StackPanel>
             </TabItem>

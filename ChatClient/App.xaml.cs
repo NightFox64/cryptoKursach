@@ -54,14 +54,24 @@ namespace ChatClient
         {
             base.OnStartup(e);
 
-            var localDataService = _serviceProvider.GetService<ILocalDataService>();
-            if (localDataService != null)
+            try
             {
-                await localDataService.InitializeAsync();
-            }
+                var localDataService = _serviceProvider.GetService<ILocalDataService>();
+                if (localDataService != null)
+                {
+                    await localDataService.InitializeAsync();
+                }
 
-            var loginWindow = _serviceProvider.GetService<LoginWindow>();
-            loginWindow?.Show();
+                var loginWindow = _serviceProvider.GetService<LoginWindow>();
+                loginWindow?.Show();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An unhandled exception occurred during startup: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                MessageBox.Show($"An unhandled error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown(-1); // Shut down the application with an error code
+            }
         }
     }
 }

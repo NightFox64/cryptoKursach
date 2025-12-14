@@ -1,7 +1,7 @@
-using ChatServer.Models;
 using ChatServer.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using ChatClient.Shared.Models;
 
 namespace ChatServer.Controllers
 {

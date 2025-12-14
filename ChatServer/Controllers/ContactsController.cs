@@ -1,11 +1,15 @@
 using ChatServer.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Threading.Tasks; // Added for Task
+using ChatClient.Shared.Models;
+using Microsoft.AspNetCore.Authorization; // Added for [Authorize]
 
 namespace ChatServer.Controllers
 {
     [ApiController]
     [Route("[controller]")]
+    [Authorize] // Added
     public class ContactsController : ControllerBase
     {
         private readonly IContactService _contactService;
@@ -16,11 +20,11 @@ namespace ChatServer.Controllers
         }
 
         [HttpPost("request")]
-        public IActionResult SendContactRequest(int userId, int contactId)
+        public async Task<IActionResult> SendContactRequest(int userId, [FromQuery]string contactLogin)
         {
             try
             {
-                _contactService.SendContactRequest(userId, contactId);
+                await _contactService.SendContactRequest(userId, contactLogin);
                 return Ok();
             }
             catch (Exception ex)
@@ -30,11 +34,11 @@ namespace ChatServer.Controllers
         }
 
         [HttpPost("accept")]
-        public IActionResult AcceptContactRequest(int userId, int contactId)
+        public async Task<IActionResult> AcceptContactRequest(int userId, int contactId) // Made async
         {
             try
             {
-                _contactService.AcceptContactRequest(userId, contactId);
+                await _contactService.AcceptContactRequest(userId, contactId); // Await call
                 return Ok();
             }
             catch (Exception ex)
@@ -44,11 +48,11 @@ namespace ChatServer.Controllers
         }
 
         [HttpPost("decline")]
-        public IActionResult DeclineContactRequest(int userId, int contactId)
+        public async Task<IActionResult> DeclineContactRequest(int userId, int contactId) // Made async
         {
             try
             {
-                _contactService.DeclineContactRequest(userId, contactId);
+                await _contactService.DeclineContactRequest(userId, contactId); // Await call
                 return Ok();
             }
             catch (Exception ex)
@@ -58,12 +62,26 @@ namespace ChatServer.Controllers
         }
 
         [HttpPost("remove")]
-        public IActionResult RemoveContact(int userId, int contactId)
+        public async Task<IActionResult> RemoveContact(int userId, int contactId) // Made async
         {
             try
             {
-                _contactService.RemoveContact(userId, contactId);
+                await _contactService.RemoveContact(userId, contactId); // Await call
                 return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> GetContacts(int userId) // Made async
+        {
+            try
+            {
+                var contacts = await _contactService.GetContacts(userId); // Await call
+                return Ok(contacts);
             }
             catch (Exception ex)
             {

@@ -1,7 +1,10 @@
-using ChatServer.Models;
-using ChatServer.Models.DTO;
 using ChatServer.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization; // Added for [AllowAnonymous]
+using ChatServer.Models;
+using ChatClient.Shared.Models.DTO;
+using System;
+using System.Threading.Tasks; // Added for Task
 
 namespace ChatServer.Controllers
 {
@@ -16,13 +19,14 @@ namespace ChatServer.Controllers
             _userService = userService;
         }
 
+        [AllowAnonymous] // Added
         [HttpPost("register")]
-        public IActionResult Register(RegisterDto model)
+        public async Task<IActionResult> Register(RegisterDto model) // Made async
         {
             try
             {
                 var user = new User { Login = model.Login };
-                _userService.Create(user, model.Password);
+                await _userService.Create(user, model.Password); // Await call
                 return Ok();
             }
             catch (Exception ex)
@@ -31,13 +35,15 @@ namespace ChatServer.Controllers
             }
         }
 
+        [AllowAnonymous] // Added
         [HttpPost("login")]
-        public IActionResult Login(LoginDto model)
+        public async Task<IActionResult> Login(LoginDto model) // Made async
         {
-            var user = _userService.Authenticate(model.Login, model.Password);
+            var user = await _userService.Authenticate(model.Login, model.Password); // Await call
             if (user != null)
             {
-                return Ok(new { UserId = user.Id });
+                var token = _userService.GenerateJwtToken(user); // Generate JWT
+                return Ok(new LoginResponseDto { UserId = user.Id, AuthToken = token }); // Return LoginResponseDto
             }
 
             return Unauthorized();

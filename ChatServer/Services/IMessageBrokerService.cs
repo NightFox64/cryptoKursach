@@ -1,5 +1,5 @@
-using ChatServer.Models;
 using System.Collections.Generic;
+using ChatClient.Shared.Models;
 
 namespace ChatServer.Services
 {

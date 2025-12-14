@@ -35,18 +35,25 @@ namespace ChatClient
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            var userId = await _chatApiClient.Login(LoginTextBox.Text, PasswordTextBox.Password);
-            if (userId.HasValue)
+            try
             {
-                MessageBox.Show("Login successful!");
-                var chatListWindow = _serviceProvider.GetService<ChatListWindow>();
-                chatListWindow?.InitializeChat(userId.Value);
-                chatListWindow?.Show();
-                Close();
+                var userId = await _chatApiClient.Login(LoginTextBox.Text, PasswordTextBox.Password);
+                if (userId.HasValue)
+                {
+                    MessageBox.Show("Login successful!");
+                    var chatListWindow = _serviceProvider.GetService<ChatListWindow>();
+                    chatListWindow?.InitializeChat(userId.Value);
+                    chatListWindow?.Show();
+                    Close();
+                }
+                else
+                {
+                    MessageBox.Show("Login failed. Invalid credentials.");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Login failed. Invalid credentials.");
+                MessageBox.Show($"An error occurred during login: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

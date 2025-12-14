@@ -21,3 +21,15 @@
 /home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/refint/CipherModes.dll
 /home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/CipherModes.pdb
 /home/max_d/prog/crypto/KURSACH/cryptoLabs/CipherModes/obj/Debug/net8.0/ref/CipherModes.dll
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\bin\Debug\net8.0\CipherModes.deps.json
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\bin\Debug\net8.0\CipherModes.dll
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\bin\Debug\net8.0\CipherModes.pdb
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\obj\Debug\net8.0\CipherModes.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\obj\Debug\net8.0\CipherModes.AssemblyInfoInputs.cache
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\obj\Debug\net8.0\CipherModes.AssemblyInfo.cs
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\obj\Debug\net8.0\CipherModes.csproj.CoreCompileInputs.cache
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\obj\Debug\net8.0\CipherModes.sourcelink.json
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\obj\Debug\net8.0\CipherModes.dll
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\obj\Debug\net8.0\refint\CipherModes.dll
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\obj\Debug\net8.0\CipherModes.pdb
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\CipherModes\obj\Debug\net8.0\ref\CipherModes.dll

@@ -1,11 +1,11 @@
-using ChatClient.Models.DTO; // Use client DTOs
+using ChatClient.Shared.Models; // Client-side models
+using ChatClient.Shared.Models.DTO; // Shared DTOs
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Numerics;
 using System.Collections.Generic;
-using ChatServer.Models; // For ChatServer.Models.Chat and ChatServer.Models.Message
 using ChatClient.Shared; // Use IChatApiClient from shared project
 using System.Net.Http.Headers;
 
@@ -33,23 +33,28 @@ namespace ChatClient.Services
         public async Task<int?> Login(string login, string password)
         {
             var loginDto = new LoginDto { Login = login, Password = password };
-            var content = new StringContent(JsonSerializer.Serialize(loginDto), Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
+            var content = new StringContent(JsonSerializer.Serialize(loginDto), Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync("/Users/login", content);
             if (response.IsSuccessStatusCode)
             {
                 var responseContent = await response.Content.ReadAsStringAsync();
-                var loginResponse = JsonSerializer.Deserialize<Dictionary<string, int>>(responseContent);
-                if (loginResponse != null && loginResponse.ContainsKey("UserId"))
+                var options = new JsonSerializerOptions
                 {
-                    return loginResponse["UserId"];
+                    PropertyNameCaseInsensitive = true
+                };
+                var loginResponse = JsonSerializer.Deserialize<LoginResponseDto>(responseContent, options);
+                if (loginResponse != null)
+                {
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginResponse.AuthToken);
+                    return loginResponse.UserId;
                 }
             }
             return null;
         }
 
-        public async Task<bool> SendContactRequest(int userId, int contactId)
+        public async Task<bool> SendContactRequest(int userId, string contactLogin)
         {
-            var response = await _httpClient.PostAsync($"/Contacts/request?userId={userId}&contactId={contactId}", null);
+            var response = await _httpClient.PostAsync($"/Contacts/request?userId={userId}&contactLogin={contactLogin}", null);
             return response.IsSuccessStatusCode;
         }
 
@@ -73,12 +78,11 @@ namespace ChatClient.Services
 
         public async Task<int?> CreateChat(string name, int initialUserId)
         {
-            var createChatDto = new CreateChatDto { Name = name, InitialUserId = initialUserId };
-            var content = new StringContent(JsonSerializer.Serialize(createChatDto), Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
-            var response = await _httpClient.PostAsync("/Chats/create", content);
+            var response = await _httpClient.PostAsync($"/Chats/create?name={name}&userId={initialUserId}", null);
             response.EnsureSuccessStatusCode();
             var responseContent = await response.Content.ReadAsStringAsync();
-            var chat = JsonSerializer.Deserialize<ChatServer.Models.Chat>(responseContent);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var chat = JsonSerializer.Deserialize<Chat>(responseContent, options);
             return chat?.Id;
         }
 
@@ -124,7 +128,7 @@ namespace ChatClient.Services
 
         public async Task<bool> SendEncryptedFragment(int chatId, int senderId, string encryptedContent)
         {
-            var message = new ChatServer.Models.Message
+            var message = new Message
             {
                 ChatId = chatId,
                 SenderId = senderId,
@@ -135,12 +139,40 @@ namespace ChatClient.Services
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<ChatServer.Models.Message?> ReceiveEncryptedFragment(int chatId, long lastDeliveryId)
+        public async Task<Message?> ReceiveEncryptedFragment(int chatId, long lastDeliveryId)
         {
             var response = await _httpClient.GetAsync($"/Messages/receive?chatId={chatId}&lastDeliveryId={lastDeliveryId}");
             response.EnsureSuccessStatusCode();
             var responseContent = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ChatServer.Models.Message>(responseContent);
+            return JsonSerializer.Deserialize<Message>(responseContent);
+        }
+
+        public async Task<List<ContactDto>> GetContacts(int userId)
+        {
+            var response = await _httpClient.GetAsync($"/Contacts/{userId}");
+            response.EnsureSuccessStatusCode();
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<List<ContactDto>>(responseContent, options);
+        }
+
+        public async Task<List<Chat>> GetChats(int userId)
+        {
+            var response = await _httpClient.GetAsync($"/Chats/{userId}");
+            response.EnsureSuccessStatusCode();
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<List<Chat>>(responseContent, options);
+        }
+
+        public async Task<int?> GetOrCreateChat(int userId1, int userId2)
+        {
+            var response = await _httpClient.PostAsync($"/Chats/getOrCreate?userId1={userId1}&userId2={userId2}", null);
+            response.EnsureSuccessStatusCode();
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var chat = JsonSerializer.Deserialize<Chat>(responseContent, options);
+            return chat?.Id;
         }
     }
 }

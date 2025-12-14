@@ -1,7 +1,8 @@
-using ChatServer.Models;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using ChatClient.Shared.Models.DTO;
+using ChatClient.Shared.Models;
 
 namespace ChatClient.Shared
 {
@@ -9,7 +10,7 @@ namespace ChatClient.Shared
     {
         Task<bool> Register(string login, string password);
         Task<int?> Login(string login, string password);
-        Task<bool> SendContactRequest(int userId, int contactId);
+        Task<bool> SendContactRequest(int userId, string contactLogin);
         Task<bool> AcceptContactRequest(int userId, int contactId);
         Task<bool> DeclineContactRequest(int userId, int contactId);
         Task<bool> RemoveContact(int userId, int contactId);
@@ -19,6 +20,9 @@ namespace ChatClient.Shared
         Task<bool> LeaveChat(int chatId, int userId);
         Task<(BigInteger serverPublicKey, BigInteger p, BigInteger g)?> RequestSessionKey(int chatId, int userId, BigInteger clientPublicKey);
         Task<bool> SendEncryptedFragment(int chatId, int senderId, string encryptedContent);
-        Task<ChatServer.Models.Message?> ReceiveEncryptedFragment(int chatId, long lastDeliveryId);
+        Task<Message?> ReceiveEncryptedFragment(int chatId, long lastDeliveryId);
+        Task<List<ContactDto>> GetContacts(int userId);
+        Task<List<Chat>> GetChats(int userId);
+        Task<int?> GetOrCreateChat(int userId1, int userId2);
     }
 }

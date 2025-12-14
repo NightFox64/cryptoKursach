@@ -1,9 +1,11 @@
 using ChatClient.Data;
-using ChatClient.Models;
 using Microsoft.EntityFrameworkCore;
+using System; // Added for DateTime
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ChatClient.Models; // For User model
+using ChatClient.Shared.Models; // For Contact, Message, Chat, File models
 
 namespace ChatClient.Services
 {
@@ -68,13 +70,58 @@ namespace ChatClient.Services
 
         public async Task AddMessageAsync(Message message)
         {
+            // Ensure timestamp is set if not already (or set it in the ViewModel/calling code)
+            if (message.Timestamp == default)
+            {
+                message.Timestamp = DateTime.UtcNow;
+            }
+
             _context.Messages.Add(message);
+
+            // If message has files, ensure they are also added and linked
+            if (message.Files != null && message.Files.Any())
+            {
+                foreach (var file in message.Files)
+                {
+                    file.MessageId = message.Id; // Link file to message
+                    _context.Files.Add(file);
+                }
+            }
             await _context.SaveChangesAsync();
         }
 
         public async Task<List<Message>> GetChatHistoryAsync(int chatId)
         {
-            return await _context.Messages.Where(m => m.ChatId == chatId).OrderBy(m => m.Id).ToListAsync();
+            return await _context.Messages
+                                 .Where(m => m.ChatId == chatId)
+                                 .Include(m => m.Files) // Eager load associated files
+                                 .OrderBy(m => m.Timestamp) // Order by timestamp for history
+                                 .ToListAsync();
+        }
+
+        public async Task SaveChatAsync(Chat chat)
+        {
+            var existingChat = await _context.Chats.FindAsync(chat.Id);
+            if (existingChat == null)
+            {
+                _context.Chats.Add(chat);
+            }
+            else
+            {
+                _context.Entry(existingChat).CurrentValues.SetValues(chat);
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<Chat?> GetChatAsync(int chatId)
+        {
+            return await _context.Chats.FindAsync(chatId);
+        }
+
+        public async Task SaveFilesAsync(IEnumerable<File> files)
+        {
+            _context.Files.AddRange(files);
+            await _context.SaveChangesAsync();
         }
     }
 }

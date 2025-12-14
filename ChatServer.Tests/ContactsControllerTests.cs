@@ -1,4 +1,4 @@
-using ChatServer.Models.DTO;
+using ChatClient.Shared.Models.DTO;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 using System.Net.Http;

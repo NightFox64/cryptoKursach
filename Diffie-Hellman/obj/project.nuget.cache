@@ -1,21 +1,19 @@
 {
   "version": 2,
-  "dgSpecHash": "pofUWRqziiE=",
+  "dgSpecHash": "y3h8Z0MQKmM=",
   "success": true,
-  "projectFilePath": "/home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/DiffieHellman.csproj",
+  "projectFilePath": "C:\\Users\\max_d\\OneDrive\\Desktop\\KURSACH\\cryptoKursach\\Diffie-Hellman\\DiffieHellman.csproj",
   "expectedPackageFiles": [
-    "/home/max_d/.nuget/packages/microsoft.extensions.primitives/7.0.0/microsoft.extensions.primitives.7.0.0.nupkg.sha512",
-    "/home/max_d/.nuget/packages/open.collections/4.0.1/open.collections.4.0.1.nupkg.sha512",
-    "/home/max_d/.nuget/packages/open.disposable/3.0.1/open.disposable.3.0.1.nupkg.sha512",
-    "/home/max_d/.nuget/packages/open.disposable.objectpools/3.0.1/open.disposable.objectpools.3.0.1.nupkg.sha512",
-    "/home/max_d/.nuget/packages/open.numeric.primes/4.0.4/open.numeric.primes.4.0.4.nupkg.sha512",
-    "/home/max_d/.nuget/packages/open.text/9.0.0/open.text.9.0.0.nupkg.sha512",
-    "/home/max_d/.nuget/packages/open.threading/3.0.3/open.threading.3.0.3.nupkg.sha512",
-    "/home/max_d/.nuget/packages/open.threading.readwrite/3.0.1/open.threading.readwrite.3.0.1.nupkg.sha512",
-    "/home/max_d/.nuget/packages/open.threading.readwritehelper/3.0.2/open.threading.readwritehelper.3.0.2.nupkg.sha512",
-    "/home/max_d/.nuget/packages/open.threading.tasks/1.2.2/open.threading.tasks.1.2.2.nupkg.sha512",
-    "/home/max_d/.nuget/packages/system.collections.immutable/8.0.0/system.collections.immutable.8.0.0.nupkg.sha512",
-    "/home/max_d/.nuget/packages/system.threading.channels/8.0.0/system.threading.channels.8.0.0.nupkg.sha512"
+    "C:\\Users\\max_d\\.nuget\\packages\\microsoft.extensions.primitives\\9.0.0\\microsoft.extensions.primitives.9.0.0.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\open.collections\\4.0.1\\open.collections.4.0.1.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\open.disposable\\3.0.1\\open.disposable.3.0.1.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\open.disposable.objectpools\\3.0.1\\open.disposable.objectpools.3.0.1.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\open.numeric.primes\\4.0.4\\open.numeric.primes.4.0.4.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\open.text\\9.0.0\\open.text.9.0.0.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\open.threading\\3.0.3\\open.threading.3.0.3.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\open.threading.readwrite\\3.0.1\\open.threading.readwrite.3.0.1.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\open.threading.readwritehelper\\3.0.2\\open.threading.readwritehelper.3.0.2.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\open.threading.tasks\\1.2.2\\open.threading.tasks.1.2.2.nupkg.sha512"
   ],
   "logs": []
 }

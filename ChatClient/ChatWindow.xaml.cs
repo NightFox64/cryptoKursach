@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using ChatClient.Shared.Models; // Added for shared models
 
 namespace ChatClient
 {
@@ -28,7 +29,7 @@ namespace ChatClient
 
         private CancellationTokenSource _cancellationTokenSource;
 
-        public ObservableCollection<Models.Message> Messages { get; set; }
+        public ObservableCollection<Message> Messages { get; set; }
 
         public ChatWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService)
         {
@@ -36,7 +37,7 @@ namespace ChatClient
             _chatApiClient = chatApiClient;
             _encryptionService = encryptionService;
 
-            Messages = new ObservableCollection<Models.Message>();
+            Messages = new ObservableCollection<Message>();
             ChatHistoryListBox.ItemsSource = Messages;
 
             // Initialize dummy session key and IV for testing
@@ -83,7 +84,7 @@ namespace ChatClient
             var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
             if (success)
             {
-                Messages.Add(new Models.Message { SenderId = _currentUserId, Content = MessageTextBox.Text, IsMine = true, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
+                Messages.Add(new Message { SenderId = _currentUserId, Content = MessageTextBox.Text, IsMine = true, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
                 MessageTextBox.Clear();
             }
             else
@@ -100,7 +101,7 @@ namespace ChatClient
                 try
                 {
                     TransferProgressBar.Visibility = Visibility.Visible;
-                    byte[] fileBytes = File.ReadAllBytes(openFileDialog.FileName);
+                    byte[] fileBytes = System.IO.File.ReadAllBytes(openFileDialog.FileName);
                     var encryptedBytes = _encryptionService.Encrypt(fileBytes, _sessionKey, _iv);
                     var encryptedContent = Convert.ToBase64String(encryptedBytes);
 
@@ -110,11 +111,11 @@ namespace ChatClient
                         string fileName = Path.GetFileName(openFileDialog.FileName);
                         if (fileName.EndsWith(".jpg") || fileName.EndsWith(".png") || fileName.EndsWith(".gif"))
                         {
-                            Messages.Add(new Models.Message { SenderId = _currentUserId, Content = "[IMAGE]" + encryptedContent, IsMine = true, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
+                            Messages.Add(new Message { SenderId = _currentUserId, Content = "[IMAGE]" + encryptedContent, IsMine = true, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
                         }
                         else
                         {
-                            Messages.Add(new Models.Message { SenderId = _currentUserId, Content = "[FILE]" + fileName + "|" + encryptedContent, IsMine = true, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
+                            Messages.Add(new Message { SenderId = _currentUserId, Content = "[FILE]" + fileName + "|" + encryptedContent, IsMine = true, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
                         }
                     }
                     else
@@ -172,17 +173,17 @@ namespace ChatClient
                             // Ensure UI update is on the UI thread
                             Application.Current.Dispatcher.Invoke(() =>
                             {
-                                Messages.Add(new Models.Message { SenderId = serverMessage.SenderId, Content = decryptedContent, IsMine = false, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
+                                Messages.Add(new Message { SenderId = serverMessage.SenderId, Content = decryptedContent, IsMine = false, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
                                 _lastDeliveryId = serverMessage.DeliveryId;
                             });
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        // MessageBox.Show($"Error receiving messages: {ex.Message}");
+                        MessageBox.Show($"Error receiving messages: {ex.Message}");
                     });
                 }
                 await Task.Delay(1000, cancellationToken); // Poll every 1 second

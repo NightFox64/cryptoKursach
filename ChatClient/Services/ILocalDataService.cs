@@ -1,6 +1,7 @@
-using ChatClient.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ChatClient.Models; // For User model
+using ChatClient.Shared.Models; // For Contact, Message, Chat, File models
 
 namespace ChatClient.Services
 {
@@ -15,5 +16,12 @@ namespace ChatClient.Services
         Task RemoveContactAsync(int userId, int contactUserId);
         Task AddMessageAsync(Message message);
         Task<List<Message>> GetChatHistoryAsync(int chatId);
+
+        // New methods for Chat
+        Task SaveChatAsync(Chat chat);
+        Task<Chat?> GetChatAsync(int chatId);
+
+        // New methods for Files
+        Task SaveFilesAsync(IEnumerable<File> files);
     }
 }

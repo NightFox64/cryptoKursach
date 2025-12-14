@@ -1,11 +1,1 @@
-{
-  "Version": 1,
-  "Hash": "xbiy+7VgQsk7u4eSODuClC4cYVz+FjX5hQm2xeE1aPM=",
-  "Source": "ChatServer",
-  "BasePath": "_content/ChatServer",
-  "Mode": "Default",
-  "ManifestType": "Build",
-  "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": []
-}
+{"Version":1,"Hash":"a4xywYZZu+qK7YwvklKVELRzTrrpk4zhnY8MUFte+5Q=","Source":"ChatServer","BasePath":"/","Mode":"Root","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}

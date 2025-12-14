@@ -25,8 +25,7 @@
       "Open.Collections/4.0.1": {
         "dependencies": {
           "Open.Text": "9.0.0",
-          "Open.Threading": "3.0.3",
-          "System.Collections.Immutable": "8.0.0"
+          "Open.Threading": "3.0.3"
         },
         "runtime": {
           "lib/netstandard2.1/Open.Collections.dll": {
@@ -46,8 +45,7 @@
       "Open.Disposable.ObjectPools/3.0.1": {
         "dependencies": {
           "Open.Disposable": "3.0.1",
-          "Open.Threading.Tasks": "1.2.2",
-          "System.Threading.Channels": "8.0.0"
+          "Open.Threading.Tasks": "1.2.2"
         },
         "runtime": {
           "lib/netstandard2.1/Open.Disposable.ObjectPools.dll": {
@@ -116,9 +114,7 @@
             "fileVersion": "1.2.2.0"
           }
         }
-      },
-      "System.Collections.Immutable/8.0.0": {},
-      "System.Threading.Channels/8.0.0": {}
+      }
     }
   },
   "libraries": {
@@ -196,20 +192,6 @@
       "sha512": "sha512-ecjvV9sI8F1zD0p5PYIscdMrkNr6zKYUpk8VIDpCq+kzNHWrhxrWE3YPpNrPCVJkrOqUoMaWj7tvB+BdLvt8OQ==",
       "path": "open.threading.tasks/1.2.2",
       "hashPath": "open.threading.tasks.1.2.2.nupkg.sha512"
-    },
-    "System.Collections.Immutable/8.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-AurL6Y5BA1WotzlEvVaIDpqzpIPvYnnldxru8oXJU2yFxFUy3+pNXjXd1ymO+RA0rq0+590Q8gaz2l3Sr7fmqg==",
-      "path": "system.collections.immutable/8.0.0",
-      "hashPath": "system.collections.immutable.8.0.0.nupkg.sha512"
-    },
-    "System.Threading.Channels/8.0.0": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-CMaFr7v+57RW7uZfZkPExsPB6ljwzhjACWW1gfU35Y56rk72B/Wu+sTqxVmGSk4SFUlPc3cjeKND0zktziyjBA==",
-      "path": "system.threading.channels/8.0.0",
-      "hashPath": "system.threading.channels.8.0.0.nupkg.sha512"
     }
   }
 }

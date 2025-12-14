@@ -11,3 +11,16 @@
 /home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/refint/DiffieHellman.dll
 /home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/DiffieHellman.pdb
 /home/max_d/prog/crypto/KURSACH/cryptoLabs/Diffie-Hellman/obj/Debug/net8.0/ref/DiffieHellman.dll
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\bin\Debug\net8.0\DiffieHellman.deps.json
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\bin\Debug\net8.0\DiffieHellman.dll
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\bin\Debug\net8.0\DiffieHellman.pdb
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\DiffieHellman.csproj.AssemblyReference.cache
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\DiffieHellman.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\DiffieHellman.AssemblyInfoInputs.cache
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\DiffieHellman.AssemblyInfo.cs
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\DiffieHellman.csproj.CoreCompileInputs.cache
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\DiffieHellman.sourcelink.json
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\DiffieHellman.dll
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\refint\DiffieHellman.dll
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\DiffieHellman.pdb
+C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\Diffie-Hellman\obj\Debug\net8.0\ref\DiffieHellman.dll

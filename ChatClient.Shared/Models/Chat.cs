@@ -1,4 +1,4 @@
-namespace ChatClient.Models
+namespace ChatClient.Shared.Models
 {
     public class Chat
     {

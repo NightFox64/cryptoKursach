@@ -652,7 +652,7 @@
       "CipherModes/1.0.0": {
         "runtime": {
           "CipherModes.dll": {
-            "assemblyVersion": "1.0.0",
+            "assemblyVersion": "1.0.0.0",
             "fileVersion": "1.0.0.0"
           }
         }

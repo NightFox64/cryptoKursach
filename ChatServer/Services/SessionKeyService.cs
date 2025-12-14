@@ -1,7 +1,7 @@
-using ChatServer.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using ChatServer.Models; // Explicitly use ChatServer.Models
 
 namespace ChatServer.Services
 {

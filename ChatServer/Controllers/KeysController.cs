@@ -1,9 +1,9 @@
-using ChatServer.Models.DTO;
 using ChatServer.Services;
 using DiffieHellman;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Numerics;
+using ChatClient.Shared.Models.DTO;
 
 namespace ChatServer.Controllers
 {
