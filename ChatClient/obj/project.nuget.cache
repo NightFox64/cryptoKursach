@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "CzhEhQ9IG+M=",
+  "dgSpecHash": "aFh4Atf6TVo=",
   "success": true,
   "projectFilePath": "C:\\Users\\max_d\\OneDrive\\Desktop\\KURSACH\\cryptoKursach\\ChatClient\\ChatClient.csproj",
   "expectedPackageFiles": [
@@ -27,7 +27,7 @@
     "C:\\Users\\max_d\\.nuget\\packages\\microsoft.testplatform.objectmodel\\17.3.2\\microsoft.testplatform.objectmodel.17.3.2.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\microsoft.testplatform.testhost\\17.3.2\\microsoft.testplatform.testhost.17.3.2.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\netstandard.library\\2.0.0\\netstandard.library.2.0.0.nupkg.sha512",
-    "C:\\Users\\max_d\\.nuget\\packages\\newtonsoft.json\\9.0.1\\newtonsoft.json.9.0.1.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\npgsql\\8.0.3\\npgsql.8.0.3.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\8.0.0\\npgsql.entityframeworkcore.postgresql.8.0.0.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\nuget.frameworks\\5.11.0\\nuget.frameworks.5.11.0.nupkg.sha512",
@@ -56,18 +56,6 @@
       "warningLevel": 1,
       "filePath": "C:\\Users\\max_d\\OneDrive\\Desktop\\KURSACH\\cryptoKursach\\ChatClient\\ChatClient.csproj",
       "libraryId": "Microsoft.Extensions.Caching.Memory",
-      "targetGraphs": [
-        "net10.0-windows7.0"
-      ]
-    },
-    {
-      "code": "NU1903",
-      "level": "Warning",
-      "message": "Package 'Newtonsoft.Json' 9.0.1 has a known high severity vulnerability, https://github.com/advisories/GHSA-5crp-9r3c-p9vr",
-      "projectPath": "C:\\Users\\max_d\\OneDrive\\Desktop\\KURSACH\\cryptoKursach\\ChatClient\\ChatClient.csproj",
-      "warningLevel": 1,
-      "filePath": "C:\\Users\\max_d\\OneDrive\\Desktop\\KURSACH\\cryptoKursach\\ChatClient\\ChatClient.csproj",
-      "libraryId": "Newtonsoft.Json",
       "targetGraphs": [
         "net10.0-windows7.0"
       ]

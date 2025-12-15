@@ -1,5 +1,7 @@
 using System;
 using System.Security.Cryptography;
+using System.Diagnostics; // Kept for consistency, though Console.WriteLine is used
+using System.Linq; // Added for string.Join
 
 namespace CipherModes
 {
@@ -62,6 +64,7 @@ namespace CipherModes
     {
         public byte[] AddPadding(byte[] data, int blockSize)
         {
+            Console.WriteLine($"PKCS7 AddPadding: data.Length={data.Length}, blockSize={blockSize}");
             int paddingLength = blockSize - (data.Length % blockSize);
             if (paddingLength == 0) paddingLength = blockSize;
             
@@ -70,22 +73,37 @@ namespace CipherModes
             
             for (int i = data.Length; i < padded.Length; i++)
                 padded[i] = (byte)paddingLength;
+
+            Console.WriteLine($"PKCS7 AddPadding: paddingLength={paddingLength}, padded.Length={padded.Length}");
+            // Log padding bytes
+            Console.WriteLine($"PKCS7 AddPadding: Padding bytes: {string.Join(", ", padded.Skip(data.Length).Select(b => b.ToString()))}");
             
             return padded;
         }
 
         public byte[] RemovePadding(byte[] data, int blockSize)
         {
+            Console.WriteLine($"PKCS7 RemovePadding: data.Length={data.Length}, blockSize={blockSize}");
             byte paddingLength = data[data.Length - 1];
+
+            Console.WriteLine($"PKCS7 RemovePadding: Detected paddingLength={paddingLength}");
+
             if (paddingLength > blockSize || paddingLength == 0)
+            {
+                Console.WriteLine($"PKCS7 RemovePadding: Invalid paddingLength detected: {paddingLength}");
                 throw new ArgumentException("Invalid padding");
+            }
             
             for (int i = data.Length - paddingLength; i < data.Length; i++)
                 if (data[i] != paddingLength)
+                {
+                    Console.WriteLine($"PKCS7 RemovePadding: Mismatch in padding byte at index {i}. Expected {paddingLength}, Got {data[i]}");
                     throw new ArgumentException("Invalid padding");
+                }
             
             byte[] result = new byte[data.Length - paddingLength];
             Array.Copy(data, result, result.Length);
+            Console.WriteLine($"PKCS7 RemovePadding: Successfully removed padding. Result length={result.Length}");
             return result;
         }
     }

@@ -7,6 +7,7 @@ namespace ChatClient.Services
     {
         CipherAlgorithm CurrentAlgorithm { get; }
         CipherMode CurrentMode { get; }
+        int RequiredKeySize { get; }
 
         void SetAlgorithm(CipherAlgorithm algorithm);
         void SetMode(CipherMode mode);

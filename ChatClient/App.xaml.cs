@@ -10,6 +10,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading; // Added for DispatcherUnhandledException
 
 namespace ChatClient
 {
@@ -25,6 +26,10 @@ namespace ChatClient
             ServiceCollection services = new ServiceCollection();
             ConfigureServices(services);
             _serviceProvider = services.BuildServiceProvider();
+
+            // Add global exception handlers
+            this.DispatcherUnhandledException += App_DispatcherUnhandledException;
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         }
 
         private void ConfigureServices(ServiceCollection services)
@@ -71,6 +76,34 @@ namespace ChatClient
                 Console.WriteLine(ex.StackTrace);
                 MessageBox.Show($"An unhandled error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown(-1); // Shut down the application with an error code
+            }
+        }
+
+        // Handler for exceptions on the UI thread
+        private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            Console.WriteLine($"Unhandled exception (UI thread): {e.Exception.Message}");
+            Console.WriteLine(e.Exception.StackTrace);
+            MessageBox.Show($"An unhandled error occurred: {e.Exception.Message}", "Error (UI Thread)", MessageBoxButton.OK, MessageBoxImage.Error);
+            e.Handled = true; // Mark the exception as handled to prevent application termination
+            // For severe errors, you might still want to shutdown: Shutdown(-1);
+        }
+
+        // Handler for exceptions on non-UI threads
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Exception ex = e.ExceptionObject as Exception;
+            if (ex != null)
+            {
+                Console.WriteLine($"Unhandled exception (non-UI thread): {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                MessageBox.Show($"An unhandled error occurred: {ex.Message}", "Error (Non-UI Thread)", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            // If e.IsTerminating is true, the application will terminate regardless of what we do here.
+            // Forcing shutdown with -1 will ensure a non-zero exit code.
+            if (e.IsTerminating)
+            {
+                Shutdown(-1);
             }
         }
     }

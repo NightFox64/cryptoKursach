@@ -24,6 +24,7 @@ namespace ChatClient
     {
         private readonly IChatApiClient _chatApiClient;
         private readonly IEncryptionService _encryptionService;
+        private readonly ILocalDataService _localDataService;
         private int _currentUserId;
         private int _currentChatId;
         private long _lastDeliveryId = 0;
@@ -37,11 +38,12 @@ namespace ChatClient
 
         public ObservableCollection<Message> Messages { get; set; }
 
-        public ChatWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService)
+        public ChatWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, ILocalDataService localDataService)
         {
             InitializeComponent();
             _chatApiClient = chatApiClient;
             _encryptionService = encryptionService;
+            _localDataService = localDataService;
 
             Messages = new ObservableCollection<Message>();
             ChatHistoryListBox.ItemsSource = Messages;
@@ -50,52 +52,54 @@ namespace ChatClient
             Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
         }
 
-        public void InitializeChat(int userId, int chatId)
+        public async void InitializeChat(int userId, int chatId)
         {
             _currentUserId = userId;
             _currentChatId = chatId;
             Title = $"Chat with User {_currentUserId} in Chat {_currentChatId}";
-            _ = EstablishSessionKey(); // Establish key before loading history
-            _ = LoadChatHistory(); // Load history when chat is initialized
+
+            // Ensure the chat exists in the local database to satisfy foreign key constraints
+            var chat = await _localDataService.GetChatAsync(chatId);
+            if (chat == null)
+            {
+                await _localDataService.SaveChatAsync(new Chat { Id = chatId, Name = $"Chat {chatId}" });
+            }
+
+            _ = LoadChatHistory(); // Load history first
+            _ = EstablishSessionKey(); // Then establish a new session key
         }
 
         private async Task EstablishSessionKey()
         {
             try
             {
-                // 1. Generate client's DH keys
-                // For simplicity, using 512 bits for now. A larger size like 1024 or 2048 is better.
                 _clientDh = new DiffieHellman.DiffieHellman(512); 
                 BigInteger clientPublicKey = _clientDh.PublicKey;
 
-                // 2. Request Session Key from server
                 var result = await _chatApiClient.RequestSessionKey(_currentChatId, _currentUserId, clientPublicKey);
 
                 if (result.HasValue)
                 {
                     var (serverPublicKey, p, g) = result.Value;
-
-                    // Reconstruct client's DH instance with shared P and G from server
+                    
                     _clientDh = new DiffieHellman.DiffieHellman(_clientDh.PrivateKey, p, g);
-
-                    // 3. Derive shared secret
+                    
                     BigInteger sharedSecret = _clientDh.GetSharedSecret(serverPublicKey);
-
-                    // 4. Derive symmetric key and IV from shared secret (matching server's logic)
+                    
                     byte[] sharedSecretBytes = sharedSecret.ToByteArray();
                     using (SHA256 sha256 = SHA256.Create())
                     {
                         byte[] hashedSecret = sha256.ComputeHash(sharedSecretBytes);
-
-                        // Symmetric Key: first 32 bytes (256 bits for AES-256)
-                        _sessionKey = new byte[32];
-                        Array.Copy(hashedSecret, 0, _sessionKey, 0, 32);
-
-                        // IV: Derive IV by hashing shared secret again with a different context
+                        
+                        int requiredKeyLength = _encryptionService.RequiredKeySize;
+                        
+                        _sessionKey = new byte[requiredKeyLength];
+                        Array.Copy(hashedSecret, 0, _sessionKey, 0, requiredKeyLength);
+                        
                         using (SHA256 sha256_iv = SHA256.Create())
                         {
                             byte[] iv_seed = Encoding.UTF8.GetBytes("IV_Seed_For_DH").Concat(sharedSecretBytes).ToArray();
-                            _iv = sha256_iv.ComputeHash(iv_seed).Take(16).ToArray(); // AES IV is 16 bytes
+                            _iv = sha256_iv.ComputeHash(iv_seed).Take(16).ToArray();
                         }
                     }
                     MessageBox.Show("Session key established successfully.");
@@ -115,19 +119,18 @@ namespace ChatClient
         {
             try
             {
-                var historyMessages = await _chatApiClient.GetChatHistory(_currentChatId);
+                var historyMessages = await _localDataService.GetChatHistoryAsync(_currentChatId);
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    Messages.Clear(); // Clear existing messages
+                    Messages.Clear();
                     foreach (var message in historyMessages)
                     {
-                        var decryptedContent = DecryptMessageContent(message); // Helper for decryption
                         Messages.Add(new Message
                         {
                             SenderId = message.SenderId,
-                            Content = decryptedContent,
+                            Content = message.Content, // Content is already decrypted
                             IsMine = message.SenderId == _currentUserId,
-                            Id = message.Id // Use actual message ID from server
+                            Id = message.Id
                         });
                         if (message.Id > _lastDeliveryId)
                         {
@@ -145,44 +148,6 @@ namespace ChatClient
             }
         }
 
-        private string DecryptMessageContent(Message message)
-        {
-            // This is largely duplicated from ReceiveMessagesLoop, consider refactoring
-            var encryptedContent = message.Content;
-            string decryptedContent = string.Empty;
-
-            if (string.IsNullOrEmpty(encryptedContent)) return string.Empty;
-
-            try
-            {
-                if (encryptedContent.StartsWith("[IMAGE]"))
-                {
-                    var base64Image = encryptedContent.Substring("[IMAGE]".Length);
-                    var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(base64Image), _sessionKey, _iv);
-                    decryptedContent = "[IMAGE]" + Convert.ToBase64String(decryptedBytes);
-                }
-                else if (encryptedContent.StartsWith("[FILE]"))
-                {
-                    var parts = encryptedContent.Split('|');
-                    var fileName = parts[0].Substring("[FILE]".Length);
-                    var base64File = parts[1];
-                    var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(base64File), _sessionKey, _iv);
-                    decryptedContent = "[FILE]" + fileName + "|" + Convert.ToBase64String(decryptedBytes);
-                }
-                else
-                {
-                    var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(encryptedContent), _sessionKey, _iv);
-                    decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Handle decryption errors, e.g., if key is wrong or content is malformed
-                decryptedContent = $"[Decryption Error: {ex.Message}]";
-            }
-            return decryptedContent;
-        }
-
         private void AlgorithmSettings_Click(object sender, RoutedEventArgs e)
         {
             var algorithmSettingsWindow = new AlgorithmSettingsWindow(_encryptionService);
@@ -194,7 +159,6 @@ namespace ChatClient
             var openFileDialog = new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true)
             {
-                // Implement file sending logic
                 MessageBox.Show($"Selected file: {openFileDialog.FileName}");
             }
         }
@@ -203,14 +167,17 @@ namespace ChatClient
         {
             if (string.IsNullOrWhiteSpace(MessageTextBox.Text)) return;
 
-            var plainTextBytes = Encoding.UTF8.GetBytes(MessageTextBox.Text);
+            var plainText = MessageTextBox.Text;
+            var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
             var encryptedBytes = _encryptionService.Encrypt(plainTextBytes, _sessionKey, _iv);
             var encryptedContent = Convert.ToBase64String(encryptedBytes);
 
             var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
             if (success)
             {
-                Messages.Add(new Message { SenderId = _currentUserId, Content = MessageTextBox.Text, IsMine = true, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
+                var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = plainText, IsMine = true, Timestamp = DateTime.UtcNow };
+                await _localDataService.AddMessageAsync(message);
+                Messages.Add(message);
                 MessageTextBox.Clear();
             }
             else
@@ -230,26 +197,30 @@ namespace ChatClient
                     byte[] fileBytes = System.IO.File.ReadAllBytes(openFileDialog.FileName);
                     var encryptedBytes = _encryptionService.Encrypt(fileBytes, _sessionKey, _iv);
                     var encryptedContent = Convert.ToBase64String(encryptedBytes);
-
+                    
                     var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
                     if (success)
                     {
                         string fileName = Path.GetFileName(openFileDialog.FileName);
+                        string messageContent;
                         if (fileName.EndsWith(".jpg") || fileName.EndsWith(".png") || fileName.EndsWith(".gif"))
                         {
-                            Messages.Add(new Message { SenderId = _currentUserId, Content = "[IMAGE]" + encryptedContent, IsMine = true, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
+                            messageContent = "[IMAGE]" + Convert.ToBase64String(fileBytes);
                         }
                         else
                         {
-                            Messages.Add(new Message { SenderId = _currentUserId, Content = "[FILE]" + fileName + "|" + encryptedContent, IsMine = true, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
+                            messageContent = "[FILE]" + fileName + "|" + Convert.ToBase64String(fileBytes);
                         }
+                        var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = messageContent, IsMine = true, Timestamp = DateTime.UtcNow };
+                        await _localDataService.AddMessageAsync(message);
+                        Messages.Add(message);
                     }
                     else
                     {
                         MessageBox.Show("Failed to send file.");
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     MessageBox.Show("Error sending file.");
                 }
@@ -266,53 +237,58 @@ namespace ChatClient
             {
                 try
                 {
-                    if (_currentChatId > 0) // Only poll if a chat is initialized
+                    if (_currentChatId > 0)
                     {
                         var serverMessage = await _chatApiClient.ReceiveEncryptedFragment(_currentChatId, _lastDeliveryId);
                         if (serverMessage != null && serverMessage.Content != null)
                         {
-                            // Decrypt and display message
-                            var encryptedContent = serverMessage.Content;
-                            string decryptedContent = string.Empty;
+                            string decryptedContent;
+                            try
+                            {
+                                var encryptedContent = serverMessage.Content;
+                                if (encryptedContent.StartsWith("[IMAGE]"))
+                                {
+                                    var base64Image = encryptedContent.Substring("[IMAGE]".Length);
+                                    var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(base64Image), _sessionKey, _iv);
+                                    decryptedContent = "[IMAGE]" + Convert.ToBase64String(decryptedBytes);
+                                }
+                                else if (encryptedContent.StartsWith("[FILE]"))
+                                {
+                                    var parts = encryptedContent.Split('|');
+                                    var fileName = parts[0].Substring("[FILE]".Length);
+                                    var base64File = parts[1];
+                                    var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(base64File), _sessionKey, _iv);
+                                    decryptedContent = "[FILE]" + fileName + "|" + Convert.ToBase64String(decryptedBytes);
+                                }
+                                else
+                                {
+                                    var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(encryptedContent), _sessionKey, _iv);
+                                    decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
+                                }
 
-                            if (encryptedContent.StartsWith("[IMAGE]"))
-                            {
-                                var base64Image = encryptedContent.Substring("[IMAGE]".Length);
-                                var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(base64Image), _sessionKey, _iv);
-                                decryptedContent = "[IMAGE]" + Convert.ToBase64String(decryptedBytes);
+                                var message = new Message { ChatId = _currentChatId, SenderId = serverMessage.SenderId, Content = decryptedContent, IsMine = false, Timestamp = DateTime.UtcNow, DeliveryId = serverMessage.DeliveryId };
+                                await _localDataService.AddMessageAsync(message);
+
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    Messages.Add(message);
+                                    _lastDeliveryId = serverMessage.DeliveryId;
+                                });
                             }
-                            else if (encryptedContent.StartsWith("[FILE]"))
+                            catch (Exception)
                             {
-                                var parts = encryptedContent.Split('|');
-                                var fileName = parts[0].Substring("[FILE]".Length);
-                                var base64File = parts[1];
-                                var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(base64File), _sessionKey, _iv);
-                                // For files, we might want to save them or offer download
-                                decryptedContent = "[FILE]" + fileName + "|" + Convert.ToBase64String(decryptedBytes);
+                                // Decryption failed, probably old session, ignore.
+                                // The message is not stored locally and not displayed.
+                                _lastDeliveryId = serverMessage.DeliveryId; // Still update delivery ID to not get stuck
                             }
-                            else
-                            {
-                                var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(encryptedContent), _sessionKey, _iv);
-                                decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
-                            }
-                            
-                            // Ensure UI update is on the UI thread
-                            Application.Current.Dispatcher.Invoke(() =>
-                            {
-                                Messages.Add(new Message { SenderId = serverMessage.SenderId, Content = decryptedContent, IsMine = false, Id = (int)DateTimeOffset.Now.ToUnixTimeMilliseconds() });
-                                _lastDeliveryId = serverMessage.DeliveryId;
-                            });
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Application.Current.Dispatcher.Invoke(() =>
-                    {
-                        MessageBox.Show($"Error receiving messages: {ex.Message}");
-                    });
+                    Console.WriteLine($"Error receiving messages: {ex.Message}");
                 }
-                await Task.Delay(1000, cancellationToken); // Poll every 1 second
+                await Task.Delay(1000, cancellationToken);
             }
         }
 

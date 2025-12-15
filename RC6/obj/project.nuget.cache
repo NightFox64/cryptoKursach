@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "yiA+xJL+anA=",
+  "dgSpecHash": "hyUc7zbJZQU=",
   "success": true,
   "projectFilePath": "C:\\Users\\max_d\\OneDrive\\Desktop\\KURSACH\\cryptoKursach\\RC6\\RC6.csproj",
   "expectedPackageFiles": [
@@ -10,23 +10,10 @@
     "C:\\Users\\max_d\\.nuget\\packages\\microsoft.testplatform.objectmodel\\17.3.2\\microsoft.testplatform.objectmodel.17.3.2.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\microsoft.testplatform.testhost\\17.3.2\\microsoft.testplatform.testhost.17.3.2.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\netstandard.library\\2.0.0\\netstandard.library.2.0.0.nupkg.sha512",
-    "C:\\Users\\max_d\\.nuget\\packages\\newtonsoft.json\\9.0.1\\newtonsoft.json.9.0.1.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\nuget.frameworks\\5.11.0\\nuget.frameworks.5.11.0.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\nunit\\3.13.3\\nunit.3.13.3.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\nunit3testadapter\\4.2.1\\nunit3testadapter.4.2.1.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1903",
-      "level": "Warning",
-      "message": "У пакета \"Newtonsoft.Json\" 9.0.1 есть известная уязвимость https://github.com/advisories/GHSA-5crp-9r3c-p9vr (уровень серьезности: высокий уровень)",
-      "projectPath": "C:\\Users\\max_d\\OneDrive\\Desktop\\KURSACH\\cryptoKursach\\RC6\\RC6.csproj",
-      "warningLevel": 1,
-      "filePath": "C:\\Users\\max_d\\OneDrive\\Desktop\\KURSACH\\cryptoKursach\\RC6\\RC6.csproj",
-      "libraryId": "Newtonsoft.Json",
-      "targetGraphs": [
-        "net10.0"
-      ]
-    }
-  ]
+  "logs": []
 }

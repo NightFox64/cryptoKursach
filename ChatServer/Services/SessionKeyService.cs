@@ -40,7 +40,7 @@ namespace ChatServer.Services
             {
                 byte[] hashedSecret = sha256.ComputeHash(sharedSecretBytes);
 
-                // Symmetric Key: first 32 bytes (256 bits for AES-256)
+                // Symmetric Key: full 32 bytes (256 bits)
                 byte[] symmetricKey = new byte[32];
                 Array.Copy(hashedSecret, 0, symmetricKey, 0, 32);
 

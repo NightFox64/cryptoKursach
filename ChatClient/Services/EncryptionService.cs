@@ -6,6 +6,8 @@ using RC6;
 using System;
 using System.Numerics;
 using System.Security.Cryptography;
+using System.Diagnostics; // Kept for consistency, though Console.WriteLine is used
+using System.Linq; // Added for string.Join
 
 namespace ChatClient.Services
 {
@@ -13,6 +15,23 @@ namespace ChatClient.Services
     {
         public CipherAlgorithm CurrentAlgorithm { get; private set; }
         public CipherMode CurrentMode { get; private set; }
+
+        // New property to expose the required key size
+        public int RequiredKeySize
+        {
+            get
+            {
+                switch (CurrentAlgorithm)
+                {
+                    case CipherAlgorithm.LOKI97:
+                        return 32; // LOKI97 requires 32-byte key
+                    case CipherAlgorithm.RC6:
+                        return 16; // RC6 requires 16-byte key
+                    default:
+                        throw new NotSupportedException($"Cipher algorithm {CurrentAlgorithm} is not supported.");
+                }
+            }
+        }
 
         public EncryptionService()
         {
@@ -32,22 +51,46 @@ namespace ChatClient.Services
 
         public byte[] Encrypt(byte[] data, byte[] key, byte[]? iv)
         {
+            Console.WriteLine($"EncryptionService Encrypt: Algorithm={CurrentAlgorithm}, Mode={CurrentMode}, data.Length={data.Length}");
+            Console.WriteLine($"EncryptionService Encrypt: Key={BitConverter.ToString(key)}, IV={(iv != null ? BitConverter.ToString(iv) : "null")}");
+
             IBlockCipher blockCipher = GetBlockCipher(key);
             IPaddingMode padding = GetPaddingMode();
             IEncryptionMode encryptionMode = GetEncryptionMode(blockCipher, padding);
 
+            Console.WriteLine($"Encrypt: Plain data length: {data.Length}, Cipher Block Size: {blockCipher.GetBlockSize()}"); // Added debug
+            
             encryptionMode.Init(key, iv);
-            return encryptionMode.Encrypt(data);
+            byte[] encryptedData = encryptionMode.Encrypt(data);
+            Console.WriteLine($"EncryptionService Encrypt: Encrypted data length={encryptedData.Length}");
+            Console.WriteLine($"Encrypt: Encrypted data length after padding/encryption: {encryptedData.Length}"); // Added debug
+            return encryptedData;
         }
 
         public byte[] Decrypt(byte[] data, byte[] key, byte[]? iv)
         {
+            Console.WriteLine($"EncryptionService Decrypt: Algorithm={CurrentAlgorithm}, Mode={CurrentMode}, data.Length={data.Length}");
+            Console.WriteLine($"EncryptionService Decrypt: Key={BitConverter.ToString(key)}, IV={(iv != null ? BitConverter.ToString(iv) : "null")}");
+
             IBlockCipher blockCipher = GetBlockCipher(key);
             IPaddingMode padding = GetPaddingMode();
             IEncryptionMode encryptionMode = GetEncryptionMode(blockCipher, padding);
 
+            Console.WriteLine($"Decrypt: Encrypted data length received: {data.Length}, Cipher Block Size: {blockCipher.GetBlockSize()}"); // Added debug
+            
             encryptionMode.Init(key, iv);
-            return encryptionMode.Decrypt(data);
+            try
+            {
+                byte[] decryptedData = encryptionMode.Decrypt(data);
+                Console.WriteLine($"EncryptionService Decrypt: Decrypted data length={decryptedData.Length}");
+                Console.WriteLine($"Decrypt: Decrypted data length after unpadding: {decryptedData.Length}"); // Added debug
+                return decryptedData;
+            }
+            catch (ArgumentException ex) when (ex.Message == "Invalid padding")
+            {
+                Console.WriteLine($"EncryptionService Decrypt: Caught Invalid padding error during decryption. data.Length={data.Length}");
+                throw; // Re-throw the exception after logging
+            }
         }
 
         public byte[] GenerateIV(int blockSize)

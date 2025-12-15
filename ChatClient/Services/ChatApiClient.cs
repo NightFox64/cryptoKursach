@@ -8,6 +8,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using ChatClient.Shared; // Use IChatApiClient from shared project
 using System.Net.Http.Headers;
+using System; // Added for Console.WriteLine
 
 namespace ChatClient.Services
 {
@@ -144,6 +145,7 @@ namespace ChatClient.Services
             var response = await _httpClient.GetAsync($"/Messages/receive?chatId={chatId}&lastDeliveryId={lastDeliveryId}");
             response.EnsureSuccessStatusCode();
             var responseContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"ChatApiClient ReceiveEncryptedFragment: Raw response content: {(responseContent.Length > 200 ? responseContent.Substring(0, 200) + "..." : responseContent)}"); // Log raw response
             if (string.IsNullOrWhiteSpace(responseContent) || responseContent == "null")
             {
                 return null;
