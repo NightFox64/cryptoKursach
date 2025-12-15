@@ -2,6 +2,7 @@ using ChatClient.Services;
 using ChatClient.Shared;
 using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
@@ -120,15 +121,26 @@ namespace ChatClient
             try
             {
                 var historyMessages = await _localDataService.GetChatHistoryAsync(_currentChatId);
+
+                var senderIds = historyMessages.Select(m => m.SenderId).Distinct().ToList();
+                var senders = new Dictionary<int, string>();
+                foreach (var senderId in senderIds)
+                {
+                    var user = await _localDataService.GetUserByIdAsync(senderId);
+                    senders[senderId] = user?.Login ?? "Unknown";
+                }
+
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     Messages.Clear();
                     foreach (var message in historyMessages)
                     {
+                        var senderLogin = senders.TryGetValue(message.SenderId, out var login) ? login : "Unknown";
+                        message.Content = $"({senderLogin}): {message.Content}";
                         Messages.Add(new Message
                         {
                             SenderId = message.SenderId,
-                            Content = message.Content, // Content is already decrypted
+                            Content = message.Content,
                             IsMine = message.SenderId == _currentUserId,
                             Id = message.Id
                         });
@@ -175,8 +187,13 @@ namespace ChatClient
             var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
             if (success)
             {
+                var currentUser = await _localDataService.GetUserByIdAsync(_currentUserId);
+                var senderLogin = currentUser?.Login ?? "Me";
+
                 var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = plainText, IsMine = true, Timestamp = DateTime.UtcNow };
                 await _localDataService.AddMessageAsync(message);
+
+                message.Content = $"({senderLogin}): {plainText}";
                 Messages.Add(message);
                 MessageTextBox.Clear();
             }
@@ -201,6 +218,9 @@ namespace ChatClient
                     var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
                     if (success)
                     {
+                        var currentUser = await _localDataService.GetUserByIdAsync(_currentUserId);
+                        var senderLogin = currentUser?.Login ?? "Me";
+
                         string fileName = Path.GetFileName(openFileDialog.FileName);
                         string messageContent;
                         if (fileName.EndsWith(".jpg") || fileName.EndsWith(".png") || fileName.EndsWith(".gif"))
@@ -213,6 +233,8 @@ namespace ChatClient
                         }
                         var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = messageContent, IsMine = true, Timestamp = DateTime.UtcNow };
                         await _localDataService.AddMessageAsync(message);
+
+                        message.Content = $"({senderLogin}): {messageContent}";
                         Messages.Add(message);
                     }
                     else
@@ -266,8 +288,13 @@ namespace ChatClient
                                     decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
                                 }
 
+                                var sender = await _localDataService.GetUserByIdAsync(serverMessage.SenderId);
+                                var senderLogin = sender?.Login ?? "Unknown";
+
                                 var message = new Message { ChatId = _currentChatId, SenderId = serverMessage.SenderId, Content = decryptedContent, IsMine = false, Timestamp = DateTime.UtcNow, DeliveryId = serverMessage.DeliveryId };
                                 await _localDataService.AddMessageAsync(message);
+
+                                message.Content = $"({senderLogin}): {decryptedContent}";
 
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {

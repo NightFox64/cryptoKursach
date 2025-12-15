@@ -19,14 +19,16 @@ namespace ChatClient
         private readonly IChatApiClient _chatApiClient;
         private readonly IEncryptionService _encryptionService;
         private readonly IServiceProvider _serviceProvider;
+        private readonly ILocalDataService _localDataService;
         private int _currentUserId;
 
-        public ChatListWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, IServiceProvider serviceProvider)
+        public ChatListWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, IServiceProvider serviceProvider, ILocalDataService localDataService)
         {
             InitializeComponent();
             _chatApiClient = chatApiClient;
             _encryptionService = encryptionService;
             _serviceProvider = serviceProvider;
+            _localDataService = localDataService;
             ContactsListBox.DisplayMemberPath = "ContactUserName";
             ChatsListBox.DisplayMemberPath = "Name";
         }
@@ -44,6 +46,10 @@ namespace ChatClient
             {
                 var contacts = await _chatApiClient.GetContacts(_currentUserId);
                 ContactsListBox.ItemsSource = contacts;
+                foreach (var contact in contacts)
+                {
+                    await _localDataService.SaveUserAsync(new User { Id = contact.ContactId, Login = contact.ContactUserName });
+                }
             }
             catch (Exception ex)
             {
