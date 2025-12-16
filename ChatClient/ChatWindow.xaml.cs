@@ -218,7 +218,20 @@ namespace ChatClient
                 {
                     TransferProgressBar.Visibility = Visibility.Visible;
                     byte[] fileBytes = System.IO.File.ReadAllBytes(openFileDialog.FileName);
-                    var encryptedBytes = _encryptionService.Encrypt(fileBytes, _sessionKey, _iv);
+
+                    string fileName = Path.GetFileName(openFileDialog.FileName);
+                    string messageContent;
+                    if (fileName.EndsWith(".jpg") || fileName.EndsWith(".png") || fileName.EndsWith(".gif"))
+                    {
+                        messageContent = "[IMAGE]" + Convert.ToBase64String(fileBytes);
+                    }
+                    else
+                    {
+                        messageContent = "[FILE]" + fileName + "|" + Convert.ToBase64String(fileBytes);
+                    }
+
+                    var messageContentBytes = Encoding.UTF8.GetBytes(messageContent);
+                    var encryptedBytes = _encryptionService.Encrypt(messageContentBytes, _sessionKey, _iv);
                     var encryptedContent = Convert.ToBase64String(encryptedBytes);
                     
                     var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
@@ -227,16 +240,6 @@ namespace ChatClient
                         var currentUser = await _localDataService.GetUserByIdAsync(_currentUserId);
                         var senderLogin = currentUser?.Login ?? "Me";
 
-                        string fileName = Path.GetFileName(openFileDialog.FileName);
-                        string messageContent;
-                        if (fileName.EndsWith(".jpg") || fileName.EndsWith(".png") || fileName.EndsWith(".gif"))
-                        {
-                            messageContent = "[IMAGE]" + Convert.ToBase64String(fileBytes);
-                        }
-                        else
-                        {
-                            messageContent = "[FILE]" + fileName + "|" + Convert.ToBase64String(fileBytes);
-                        }
                         var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = messageContent, IsMine = true, Timestamp = DateTime.UtcNow };
                         await _localDataService.AddMessageAsync(message);
 
@@ -273,29 +276,11 @@ namespace ChatClient
                         var serverMessage = await _chatApiClient.ReceiveEncryptedFragment(_currentChatId, _lastDeliveryId);
                         if (serverMessage != null && serverMessage.Content != null)
                         {
-                            string decryptedContent;
                             try
                             {
-                                var encryptedContent = serverMessage.Content;
-                                if (encryptedContent.StartsWith("[IMAGE]"))
-                                {
-                                    var base64Image = encryptedContent.Substring("[IMAGE]".Length);
-                                    var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(base64Image), _sessionKey, _iv);
-                                    decryptedContent = "[IMAGE]" + Convert.ToBase64String(decryptedBytes);
-                                }
-                                else if (encryptedContent.StartsWith("[FILE]"))
-                                {
-                                    var parts = encryptedContent.Split('|');
-                                    var fileName = parts[0].Substring("[FILE]".Length);
-                                    var base64File = parts[1];
-                                    var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(base64File), _sessionKey, _iv);
-                                    decryptedContent = "[FILE]" + fileName + "|" + Convert.ToBase64String(decryptedBytes);
-                                }
-                                else
-                                {
-                                    var decryptedBytes = _encryptionService.Decrypt(Convert.FromBase64String(encryptedContent), _sessionKey, _iv);
-                                    decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
-                                }
+                                var encryptedBytes = Convert.FromBase64String(serverMessage.Content);
+                                var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
+                                var decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
 
                                 var sender = await _localDataService.GetUserByIdAsync(serverMessage.SenderId);
                                 var senderLogin = sender?.Login ?? "Unknown";
@@ -318,7 +303,10 @@ namespace ChatClient
                             {
                                 // Decryption failed, probably old session, ignore.
                                 // The message is not stored locally and not displayed.
-                                _lastDeliveryId = serverMessage.DeliveryId; // Still update delivery ID to not get stuck
+                                if(serverMessage != null)
+                                {
+                                    _lastDeliveryId = serverMessage.DeliveryId; // Still update delivery ID to not get stuck
+                                }
                             }
                         }
                     }

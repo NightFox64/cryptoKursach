@@ -9,24 +9,23 @@
         Title="Chat" Height="450" Width="600"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
+        <converters:ImageConverter x:Key="ImageConverter"/>
+        <converters:IsMineToHorizontalAlignmentConverter x:Key="IsMineToAlignmentConverter"/>
         <converters:MessageTypeToTemplateConverter x:Key="MessageTypeConverter">
             <converters:MessageTypeToTemplateConverter.TextMessageTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Content}" TextWrapping="Wrap" HorizontalAlignment="{Binding HorizontalAlignment}"/>
+                    <TextBlock Text="{Binding Content}" TextWrapping="Wrap" HorizontalAlignment="{Binding IsMine, Converter={StaticResource IsMineToAlignmentConverter}}"/>
                 </DataTemplate>
             </converters:MessageTypeToTemplateConverter.TextMessageTemplate>
             <converters:MessageTypeToTemplateConverter.ImageMessageTemplate>
                 <DataTemplate>
-                    <StackPanel>
-                        <TextBlock Text="Image:" HorizontalAlignment="{Binding HorizontalAlignment}"/>
-                        <Image Source="{Binding Content}" MaxHeight="100"/>
-                    </StackPanel>
+                    <Image Source="{Binding Content, Converter={StaticResource ImageConverter}}" MaxHeight="100" HorizontalAlignment="{Binding IsMine, Converter={StaticResource IsMineToAlignmentConverter}}"/>
                 </DataTemplate>
             </converters:MessageTypeToTemplateConverter.ImageMessageTemplate>
             <converters:MessageTypeToTemplateConverter.FileMessageTemplate>
                 <DataTemplate>
                     <StackPanel>
-                        <TextBlock Text="File:" HorizontalAlignment="{Binding HorizontalAlignment}"/>
+                        <TextBlock Text="File:" HorizontalAlignment="{Binding IsMine, Converter={StaticResource IsMineToAlignmentConverter}}"/>
                         <Button Content="Download File" CommandParameter="{Binding Content}"/>
                     </StackPanel>
                 </DataTemplate>
@@ -45,9 +44,6 @@
         <Menu Grid.Row="0">
             <MenuItem Header="Settings">
                 <MenuItem Header="Algorithm Settings" Click="AlgorithmSettings_Click"/>
-            </MenuItem>
-            <MenuItem Header="File">
-                <MenuItem Header="Select File" Click="SelectFile_Click"/>
             </MenuItem>
         </Menu>
 

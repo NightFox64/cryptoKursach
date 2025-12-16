@@ -19,11 +19,12 @@ namespace ChatClient.Converters
             {
                 if (message.Content != null)
                 {
-                    if (message.Content.StartsWith("[IMAGE]") && ImageMessageTemplate != null)
+                    // Check if content contains [IMAGE] or [FILE] markers (even after sender prefix)
+                    if (message.Content.Contains("[IMAGE]") && ImageMessageTemplate != null)
                     {
                         return ImageMessageTemplate;
                     }
-                    else if (message.Content.StartsWith("[FILE]") && FileMessageTemplate != null)
+                    else if (message.Content.Contains("[FILE]") && FileMessageTemplate != null)
                     {
                         return FileMessageTemplate;
                     }

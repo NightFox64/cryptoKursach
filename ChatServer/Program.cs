@@ -5,6 +5,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Microsoft.AspNetCore.Authentication.JwtBearer; // Added
 using Microsoft.IdentityModel.Tokens; // Added
 using System.Text; // Added for Encoding
+using ChatServer.Middleware; // Added for custom middleware
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://localhost:5280", "https://localhost:7252");
@@ -51,6 +52,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionLoggingMiddleware>(); // Add custom exception logging middleware
 
 // Ensure the database is created on startup
 using (var scope = app.Services.CreateScope())

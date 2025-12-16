@@ -27,6 +27,8 @@ namespace ChatClient.Services
                         return 32; // LOKI97 requires 32-byte key
                     case CipherAlgorithm.RC6:
                         return 16; // RC6 requires 16-byte key
+                    case CipherAlgorithm.Aes:
+                        return 32; // AES-256
                     default:
                         throw new NotSupportedException($"Cipher algorithm {CurrentAlgorithm} is not supported.");
                 }
@@ -35,7 +37,7 @@ namespace ChatClient.Services
 
         public EncryptionService()
         {
-            CurrentAlgorithm = CipherAlgorithm.LOKI97; // Default
+            CurrentAlgorithm = CipherAlgorithm.Aes; // Default
             CurrentMode = CipherMode.CBC; // Default
         }
 
@@ -133,6 +135,10 @@ namespace ChatClient.Services
                     var rc6 = new RC6.RC6();
                     rc6.SetKey(key);
                     return rc6;
+                case CipherAlgorithm.Aes:
+                    var aes = new AesWrapper();
+                    aes.SetKey(key);
+                    return aes;
                 default:
                     throw new NotSupportedException($"Cipher algorithm {CurrentAlgorithm} is not supported.");
             }
