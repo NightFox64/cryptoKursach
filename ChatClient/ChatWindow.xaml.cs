@@ -136,7 +136,10 @@ namespace ChatClient
                     foreach (var message in historyMessages)
                     {
                         var senderLogin = senders.TryGetValue(message.SenderId, out var login) ? login : "Unknown";
-                        message.Content = $"({senderLogin}): {message.Content}";
+                        if (!message.Content.StartsWith($"({senderLogin}): "))
+                        {
+                            message.Content = $"({senderLogin}): {message.Content}";
+                        }
                         Messages.Add(new Message
                         {
                             SenderId = message.SenderId,
@@ -193,7 +196,10 @@ namespace ChatClient
                 var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = plainText, IsMine = true, Timestamp = DateTime.UtcNow };
                 await _localDataService.AddMessageAsync(message);
 
-                message.Content = $"({senderLogin}): {plainText}";
+                if (!message.Content.StartsWith($"({senderLogin}): "))
+                {
+                    message.Content = $"({senderLogin}): {plainText}";
+                }
                 Messages.Add(message);
                 MessageTextBox.Clear();
             }
@@ -234,7 +240,10 @@ namespace ChatClient
                         var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = messageContent, IsMine = true, Timestamp = DateTime.UtcNow };
                         await _localDataService.AddMessageAsync(message);
 
-                        message.Content = $"({senderLogin}): {messageContent}";
+                        if (!message.Content.StartsWith($"({senderLogin}): "))
+                        {
+                            message.Content = $"({senderLogin}): {messageContent}";
+                        }
                         Messages.Add(message);
                     }
                     else
@@ -294,7 +303,10 @@ namespace ChatClient
                                 var message = new Message { ChatId = _currentChatId, SenderId = serverMessage.SenderId, Content = decryptedContent, IsMine = false, Timestamp = DateTime.UtcNow, DeliveryId = serverMessage.DeliveryId };
                                 await _localDataService.AddMessageAsync(message);
 
-                                message.Content = $"({senderLogin}): {decryptedContent}";
+                                if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                                {
+                                    message.Content = $"({senderLogin}): {decryptedContent}";
+                                }
 
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
