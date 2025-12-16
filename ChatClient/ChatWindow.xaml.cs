@@ -15,6 +15,7 @@ using System.Numerics; // Added for BigInteger
 using DiffieHellman; // Added for DiffieHellman class
 using System.Security.Cryptography; // Added for SHA256
 using System.Linq; // Added for Concat and Take
+using Microsoft.Extensions.DependencyInjection; // Added for IServiceProvider scoping
 
 namespace ChatClient
 {
@@ -25,13 +26,13 @@ namespace ChatClient
     {
         private readonly IChatApiClient _chatApiClient;
         private readonly IEncryptionService _encryptionService;
-        private readonly ILocalDataService _localDataService;
+        private readonly IServiceProvider _serviceProvider;
         private int _currentUserId;
         private int _currentChatId;
         private long _lastDeliveryId = 0;
 
         private byte[] _sessionKey = new byte[32]; // Will be set by DH
-        private byte[] _iv = new byte[16]; // Will be set by DH
+        private byte[] _iv = Array.Empty<byte>(); // Will be set by DH based on algorithm
 
         private DiffieHellman.DiffieHellman? _clientDh; // Client's DH instance
 
@@ -41,12 +42,12 @@ namespace ChatClient
 
         public ObservableCollection<Message> Messages { get; set; }
 
-        public ChatWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, ILocalDataService localDataService)
+        public ChatWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, IServiceProvider serviceProvider)
         {
             InitializeComponent();
             _chatApiClient = chatApiClient;
             _encryptionService = encryptionService;
-            _localDataService = localDataService;
+            _serviceProvider = serviceProvider;
 
             Messages = new ObservableCollection<Message>();
             ChatHistoryListBox.ItemsSource = Messages;
@@ -106,31 +107,37 @@ namespace ChatClient
                 var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
                 var decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
 
-                var sender_user = await _localDataService.GetUserByIdAsync(messageData.SenderId);
-                var senderLogin = sender_user?.Login ?? "Unknown";
-
-                var message = new Message 
-                { 
-                    ChatId = messageData.ChatId, 
-                    SenderId = messageData.SenderId, 
-                    Content = decryptedContent, 
-                    IsMine = messageData.SenderId == _currentUserId, 
-                    Timestamp = messageData.Timestamp, 
-                    DeliveryId = messageData.DeliveryId 
-                };
-                
-                await _localDataService.AddMessageAsync(message);
-
-                if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                // Create a new scope for database operations to avoid threading issues
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    message.Content = $"({senderLogin}): {decryptedContent}";
+                    var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                    
+                    var sender_user = await localDataService.GetUserByIdAsync(messageData.SenderId);
+                    var senderLogin = sender_user?.Login ?? "Unknown";
+
+                    var message = new Message 
+                    { 
+                        ChatId = messageData.ChatId, 
+                        SenderId = messageData.SenderId, 
+                        Content = decryptedContent, 
+                        IsMine = messageData.SenderId == _currentUserId, 
+                        Timestamp = messageData.Timestamp, 
+                        DeliveryId = messageData.DeliveryId 
+                    };
+                    
+                    await localDataService.AddMessageAsync(message);
+
+                    if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                    {
+                        message.Content = $"({senderLogin}): {decryptedContent}";
+                    }
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        Messages.Add(message);
+                        _lastDeliveryId = messageData.DeliveryId;
+                    });
                 }
-
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    Messages.Add(message);
-                    _lastDeliveryId = messageData.DeliveryId;
-                });
             }
             catch (Exception ex)
             {
@@ -138,17 +145,49 @@ namespace ChatClient
             }
         }
 
-        public async void InitializeChat(int userId, int chatId)
+        public async void InitializeChat(int userId, int chatId, Chat? chat = null)
         {
             _currentUserId = userId;
             _currentChatId = chatId;
-            Title = $"Chat with User {_currentUserId} in Chat {_currentChatId}";
-
-            // Ensure the chat exists in the local database to satisfy foreign key constraints
-            var chat = await _localDataService.GetChatAsync(chatId);
-            if (chat == null)
+            
+            // Create a scope for database operations
+            using (var scope = _serviceProvider.CreateScope())
             {
-                await _localDataService.SaveChatAsync(new Chat { Id = chatId, Name = $"Chat {chatId}" });
+                var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                
+                // If chat object is provided, use its settings
+                if (chat != null)
+                {
+                    Title = $"{chat.Name ?? $"Chat {chatId}"}";
+                    
+                    // Set encryption settings from chat
+                    if (!string.IsNullOrEmpty(chat.CipherAlgorithm))
+                    {
+                        _encryptionService.SetCipherAlgorithm(chat.CipherAlgorithm);
+                    }
+                    if (!string.IsNullOrEmpty(chat.CipherMode))
+                    {
+                        _encryptionService.SetCipherMode(chat.CipherMode);
+                    }
+                    if (!string.IsNullOrEmpty(chat.PaddingMode))
+                    {
+                        _encryptionService.SetPaddingMode(chat.PaddingMode);
+                    }
+                    
+                    // Save chat to local database
+                    await localDataService.SaveChatAsync(chat);
+                }
+                else
+                {
+                    Title = $"Chat {_currentChatId}";
+                    
+                    // Ensure the chat exists in the local database to satisfy foreign key constraints
+                    var localChat = await localDataService.GetChatAsync(chatId);
+                    if (localChat == null)
+                    {
+                        await localDataService.SaveChatAsync(new Chat { Id = chatId, Name = $"Chat {chatId}" });
+                    }
+                }
             }
 
             _ = LoadChatHistory(); // Load history first
@@ -192,6 +231,7 @@ namespace ChatClient
                         byte[] hashedSecret = sha256.ComputeHash(sharedSecretBytes);
                         
                         int requiredKeyLength = _encryptionService.RequiredKeySize;
+                        int requiredIvLength = _encryptionService.BlockSize;
                         
                         _sessionKey = new byte[requiredKeyLength];
                         Array.Copy(hashedSecret, 0, _sessionKey, 0, requiredKeyLength);
@@ -199,7 +239,7 @@ namespace ChatClient
                         using (SHA256 sha256_iv = SHA256.Create())
                         {
                             byte[] iv_seed = Encoding.UTF8.GetBytes("IV_Seed_For_DH").Concat(sharedSecretBytes).ToArray();
-                            _iv = sha256_iv.ComputeHash(iv_seed).Take(16).ToArray();
+                            _iv = sha256_iv.ComputeHash(iv_seed).Take(requiredIvLength).ToArray();
                         }
                     }
                     MessageBox.Show("Session key established successfully.");
@@ -219,39 +259,44 @@ namespace ChatClient
         {
             try
             {
-                var historyMessages = await _localDataService.GetChatHistoryAsync(_currentChatId);
-
-                var senderIds = historyMessages.Select(m => m.SenderId).Distinct().ToList();
-                var senders = new Dictionary<int, string>();
-                foreach (var senderId in senderIds)
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    var user = await _localDataService.GetUserByIdAsync(senderId);
-                    senders[senderId] = user?.Login ?? "Unknown";
-                }
+                    var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                    
+                    var historyMessages = await localDataService.GetChatHistoryAsync(_currentChatId);
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    Messages.Clear();
-                    foreach (var message in historyMessages)
+                    var senderIds = historyMessages.Select(m => m.SenderId).Distinct().ToList();
+                    var senders = new Dictionary<int, string>();
+                    foreach (var senderId in senderIds)
                     {
-                        var senderLogin = senders.TryGetValue(message.SenderId, out var login) ? login : "Unknown";
-                        if (!message.Content.StartsWith($"({senderLogin}): "))
-                        {
-                            message.Content = $"({senderLogin}): {message.Content}";
-                        }
-                        Messages.Add(new Message
-                        {
-                            SenderId = message.SenderId,
-                            Content = message.Content,
-                            IsMine = message.SenderId == _currentUserId,
-                            Id = message.Id
-                        });
-                        if (message.Id > _lastDeliveryId)
-                        {
-                            _lastDeliveryId = message.Id;
-                        }
+                        var user = await localDataService.GetUserByIdAsync(senderId);
+                        senders[senderId] = user?.Login ?? "Unknown";
                     }
-                });
+
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        Messages.Clear();
+                        foreach (var message in historyMessages)
+                        {
+                            var senderLogin = senders.TryGetValue(message.SenderId, out var login) ? login : "Unknown";
+                            if (!message.Content.StartsWith($"({senderLogin}): "))
+                            {
+                                message.Content = $"({senderLogin}): {message.Content}";
+                            }
+                            Messages.Add(new Message
+                            {
+                                SenderId = message.SenderId,
+                                Content = message.Content,
+                                IsMine = message.SenderId == _currentUserId,
+                                Id = message.Id
+                            });
+                            if (message.Id > _lastDeliveryId)
+                            {
+                                _lastDeliveryId = message.Id;
+                            }
+                        }
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -289,18 +334,23 @@ namespace ChatClient
             var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
             if (success)
             {
-                var currentUser = await _localDataService.GetUserByIdAsync(_currentUserId);
-                var senderLogin = currentUser?.Login ?? "Me";
-
-                var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = plainText, IsMine = true, Timestamp = DateTime.UtcNow };
-                await _localDataService.AddMessageAsync(message);
-
-                if (!message.Content.StartsWith($"({senderLogin}): "))
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    message.Content = $"({senderLogin}): {plainText}";
+                    var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                    
+                    var currentUser = await localDataService.GetUserByIdAsync(_currentUserId);
+                    var senderLogin = currentUser?.Login ?? "Me";
+
+                    var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = plainText, IsMine = true, Timestamp = DateTime.UtcNow };
+                    await localDataService.AddMessageAsync(message);
+
+                    if (!message.Content.StartsWith($"({senderLogin}): "))
+                    {
+                        message.Content = $"({senderLogin}): {plainText}";
+                    }
+                    Messages.Add(message);
+                    MessageTextBox.Clear();
                 }
-                Messages.Add(message);
-                MessageTextBox.Clear();
             }
             else
             {
@@ -336,17 +386,22 @@ namespace ChatClient
                     var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
                     if (success)
                     {
-                        var currentUser = await _localDataService.GetUserByIdAsync(_currentUserId);
-                        var senderLogin = currentUser?.Login ?? "Me";
-
-                        var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = messageContent, IsMine = true, Timestamp = DateTime.UtcNow };
-                        await _localDataService.AddMessageAsync(message);
-
-                        if (!message.Content.StartsWith($"({senderLogin}): "))
+                        using (var scope = _serviceProvider.CreateScope())
                         {
-                            message.Content = $"({senderLogin}): {messageContent}";
+                            var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                            
+                            var currentUser = await localDataService.GetUserByIdAsync(_currentUserId);
+                            var senderLogin = currentUser?.Login ?? "Me";
+
+                            var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = messageContent, IsMine = true, Timestamp = DateTime.UtcNow };
+                            await localDataService.AddMessageAsync(message);
+
+                            if (!message.Content.StartsWith($"({senderLogin}): "))
+                            {
+                                message.Content = $"({senderLogin}): {messageContent}";
+                            }
+                            Messages.Add(message);
                         }
-                        Messages.Add(message);
                     }
                     else
                     {
@@ -381,22 +436,27 @@ namespace ChatClient
                                 var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
                                 var decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
 
-                                var sender = await _localDataService.GetUserByIdAsync(serverMessage.SenderId);
-                                var senderLogin = sender?.Login ?? "Unknown";
-
-                                var message = new Message { ChatId = _currentChatId, SenderId = serverMessage.SenderId, Content = decryptedContent, IsMine = false, Timestamp = DateTime.UtcNow, DeliveryId = serverMessage.DeliveryId };
-                                await _localDataService.AddMessageAsync(message);
-
-                                if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                                using (var scope = _serviceProvider.CreateScope())
                                 {
-                                    message.Content = $"({senderLogin}): {decryptedContent}";
+                                    var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                                    
+                                    var sender = await localDataService.GetUserByIdAsync(serverMessage.SenderId);
+                                    var senderLogin = sender?.Login ?? "Unknown";
+
+                                    var message = new Message { ChatId = _currentChatId, SenderId = serverMessage.SenderId, Content = decryptedContent, IsMine = false, Timestamp = DateTime.UtcNow, DeliveryId = serverMessage.DeliveryId };
+                                    await localDataService.AddMessageAsync(message);
+
+                                    if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                                    {
+                                        message.Content = $"({senderLogin}): {decryptedContent}";
+                                    }
+
+                                    Application.Current.Dispatcher.Invoke(() =>
+                                    {
+                                        Messages.Add(message);
+                                        _lastDeliveryId = serverMessage.DeliveryId;
+                                    });
                                 }
-
-                                Application.Current.Dispatcher.Invoke(() =>
-                                {
-                                    Messages.Add(message);
-                                    _lastDeliveryId = serverMessage.DeliveryId;
-                                });
                             }
                             catch (Exception)
                             {

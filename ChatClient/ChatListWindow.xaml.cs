@@ -19,16 +19,14 @@ namespace ChatClient
         private readonly IChatApiClient _chatApiClient;
         private readonly IEncryptionService _encryptionService;
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILocalDataService _localDataService;
         private int _currentUserId;
 
-        public ChatListWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, IServiceProvider serviceProvider, ILocalDataService localDataService)
+        public ChatListWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, IServiceProvider serviceProvider)
         {
             InitializeComponent();
             _chatApiClient = chatApiClient;
             _encryptionService = encryptionService;
             _serviceProvider = serviceProvider;
-            _localDataService = localDataService;
             ContactsListBox.DisplayMemberPath = "ContactUserName";
             ChatsListBox.DisplayMemberPath = "Name";
         }
@@ -46,9 +44,14 @@ namespace ChatClient
             {
                 var contacts = await _chatApiClient.GetContacts(_currentUserId);
                 ContactsListBox.ItemsSource = contacts;
-                foreach (var contact in contacts)
+                
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    await _localDataService.SaveUserAsync(new User { Id = contact.ContactId, Login = contact.ContactUserName });
+                    var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                    foreach (var contact in contacts)
+                    {
+                        await localDataService.SaveUserAsync(new User { Id = contact.ContactId, Login = contact.ContactUserName });
+                    }
                 }
             }
             catch (Exception ex)
@@ -72,10 +75,10 @@ namespace ChatClient
 
         private void ChatsListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            if (ChatsListBox.SelectedItem is Chat selectedChat) // Assuming Chat objects are directly in the list
+            if (ChatsListBox.SelectedItem is Chat selectedChat)
             {
                 var chatWindow = _serviceProvider.GetService<ChatWindow>();
-                chatWindow?.InitializeChat(_currentUserId, selectedChat.Id);
+                chatWindow?.InitializeChat(_currentUserId, selectedChat.Id, selectedChat);
                 chatWindow?.Show();
             }
         }
@@ -86,23 +89,60 @@ namespace ChatClient
             {
                 try
                 {
-                    // Get or create a chat with the selected contact
-                    var chatId = await _chatApiClient.GetOrCreateChat(_currentUserId, selectedContact.ContactId);
-
-                    if (chatId.HasValue)
+                    // Show dialog to select existing chat or create new one
+                    var selectChatWindow = new SelectOrCreateChatWindow(
+                        _chatApiClient, 
+                        _currentUserId, 
+                        selectedContact.ContactId, 
+                        selectedContact.ContactUserName);
+                    
+                    if (selectChatWindow.ShowDialog() == true)
                     {
-                        var chatWindow = _serviceProvider.GetService<ChatWindow>();
-                        chatWindow?.InitializeChat(_currentUserId, chatId.Value);
-                        chatWindow?.Show();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Failed to get or create chat with contact.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        Chat? chatToOpen = null;
+                        
+                        if (selectChatWindow.CreateNew)
+                        {
+                            // Show create chat dialog
+                            var createChatWindow = new CreateChatWindow();
+                            if (createChatWindow.ShowDialog() == true)
+                            {
+                                chatToOpen = await _chatApiClient.CreateChat(
+                                    createChatWindow.ChatName,
+                                    _currentUserId,
+                                    selectedContact.ContactId,
+                                    createChatWindow.CipherAlgorithm,
+                                    createChatWindow.CipherMode,
+                                    createChatWindow.PaddingMode
+                                );
+                                
+                                if (chatToOpen != null)
+                                {
+                                    MessageBox.Show($"Chat '{createChatWindow.ChatName}' created successfully!");
+                                    await RefreshChats();
+                                }
+                            }
+                        }
+                        else
+                        {
+                            chatToOpen = selectChatWindow.SelectedChat;
+                        }
+                        
+                        if (chatToOpen != null)
+                        {
+                            var chatWindow = _serviceProvider.GetService<ChatWindow>();
+                            chatWindow?.InitializeChat(_currentUserId, chatToOpen.Id, chatToOpen);
+                            chatWindow?.Show();
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Error opening chat with contact: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                finally
+                {
+                    // Clear selection to allow re-selecting the same contact
+                    ContactsListBox.SelectedItem = null;
                 }
             }
         }
@@ -128,28 +168,7 @@ namespace ChatClient
 
         private async void CreateChatButton_Click(object sender, RoutedEventArgs e)
         {
-            var createChatWindow = new CreateChatWindow();
-            if (createChatWindow.ShowDialog() == true)
-            {
-                var chatName = createChatWindow.ChatName;
-                try
-                {
-                    var chatId = await _chatApiClient.CreateChat(chatName, _currentUserId);
-                    if (chatId.HasValue)
-                    {
-                        MessageBox.Show($"Chat '{chatName}' created successfully!");
-                        await RefreshChats();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Failed to create chat.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"An error occurred while creating chat: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
+            MessageBox.Show("Please select a contact to create a chat with them.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

@@ -77,14 +77,23 @@ namespace ChatClient.Services
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<int?> CreateChat(string name, int initialUserId)
+        public async Task<Chat?> CreateChat(string name, int initialUserId, int otherUserId, string? cipherAlgorithm, string? cipherMode, string? paddingMode)
         {
-            var response = await _httpClient.PostAsync($"/Chats/create?name={name}&userId={initialUserId}", null);
+            var createChatDto = new ChatClient.Shared.DTO.CreateChatDto
+            {
+                Name = name,
+                UserId = initialUserId,
+                OtherUserId = otherUserId,
+                CipherAlgorithm = cipherAlgorithm,
+                CipherMode = cipherMode,
+                PaddingMode = paddingMode
+            };
+            var content = new StringContent(JsonSerializer.Serialize(createChatDto), Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync("/Chats/create", content);
             response.EnsureSuccessStatusCode();
             var responseContent = await response.Content.ReadAsStringAsync();
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var chat = JsonSerializer.Deserialize<Chat>(responseContent, options);
-            return chat?.Id;
+            return JsonSerializer.Deserialize<Chat>(responseContent, options);
         }
 
         public async Task<bool> CloseChat(int chatId)

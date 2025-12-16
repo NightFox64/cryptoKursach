@@ -20,12 +20,19 @@ namespace ChatServer.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateChat(string name, int userId) // Made async
+        public async Task<IActionResult> CreateChat([FromBody] ChatClient.Shared.DTO.CreateChatDto dto)
         {
             try
             {
-                Console.WriteLine($"ChatsController: Received CreateChat for name: {name}, userId: {userId}");
-                var chat = await _chatService.CreateChat(name, userId); // Await call
+                Console.WriteLine($"ChatsController: Received CreateChat for name: {dto.Name}, userId: {dto.UserId}, otherUserId: {dto.OtherUserId}");
+                var chat = await _chatService.CreateChat(
+                    dto.Name ?? "New Chat", 
+                    dto.UserId, 
+                    dto.OtherUserId, 
+                    dto.CipherAlgorithm, 
+                    dto.CipherMode, 
+                    dto.PaddingMode
+                );
                 Console.WriteLine($"ChatsController: Created chat with ID: {chat.Id}");
                 return Ok(chat);
             }

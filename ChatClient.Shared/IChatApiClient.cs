@@ -14,7 +14,7 @@ namespace ChatClient.Shared
         Task<bool> AcceptContactRequest(int userId, int contactId);
         Task<bool> DeclineContactRequest(int userId, int contactId);
         Task<bool> RemoveContact(int userId, int contactId);
-        Task<int?> CreateChat(string name, int initialUserId);
+        Task<Chat?> CreateChat(string name, int initialUserId, int otherUserId, string? cipherAlgorithm, string? cipherMode, string? paddingMode);
         Task<bool> CloseChat(int chatId);
         Task<bool> JoinChat(int chatId, int userId);
         Task<bool> LeaveChat(int chatId, int userId);

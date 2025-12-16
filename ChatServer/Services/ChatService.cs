@@ -17,12 +17,15 @@ namespace ChatServer.Services
             _context = context;
         }
 
-        public async Task<Chat> CreateChat(string name, int initialUserId)
+        public async Task<Chat> CreateChat(string name, int initialUserId, int otherUserId, string? cipherAlgorithm, string? cipherMode, string? paddingMode)
         {
             var chat = new Chat
             {
                 Name = name,
-                UserIds = new List<int> { initialUserId }
+                UserIds = new List<int> { initialUserId, otherUserId },
+                CipherAlgorithm = cipherAlgorithm ?? "RC6",
+                CipherMode = cipherMode ?? "CBC",
+                PaddingMode = paddingMode ?? "PKCS7"
             };
             _context.Chats.Add(chat);
             await _context.SaveChangesAsync();

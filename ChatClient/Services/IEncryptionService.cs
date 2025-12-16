@@ -8,9 +8,13 @@ namespace ChatClient.Services
         CipherAlgorithm CurrentAlgorithm { get; }
         CipherMode CurrentMode { get; }
         int RequiredKeySize { get; }
+        int BlockSize { get; }
 
         void SetAlgorithm(CipherAlgorithm algorithm);
         void SetMode(CipherMode mode);
+        void SetCipherAlgorithm(string algorithm);
+        void SetCipherMode(string mode);
+        void SetPaddingMode(string padding);
         byte[] Encrypt(byte[] data, byte[] key, byte[]? iv);
         byte[] Decrypt(byte[] data, byte[] key, byte[]? iv);
         byte[] GenerateIV(int blockSize);

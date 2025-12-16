@@ -41,10 +41,10 @@ namespace ChatClient
 
             // Configure DbContext
             services.AddDbContext<ChatClient.Data.ApplicationDbContext>(options =>
-                options.UseSqlite("Data Source=chatclient.db"));
+                options.UseNpgsql("Host=localhost;Port=5432;Database=chatclient_db;Username=postgres;Password=Ichiho64"));
 
-            // Register local data service
-            services.AddSingleton<ILocalDataService, LocalDataService>();
+            // Register local data service as Scoped to match DbContext lifetime
+            services.AddScoped<ILocalDataService, LocalDataService>();
 
 
             // Register your windows and viewmodels here

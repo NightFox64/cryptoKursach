@@ -12,14 +12,12 @@ namespace ChatClient
     {
         private readonly IChatApiClient _chatApiClient;
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILocalDataService _localDataService;
 
-        public LoginWindow(IChatApiClient chatApiClient, IServiceProvider serviceProvider, ILocalDataService localDataService)
+        public LoginWindow(IChatApiClient chatApiClient, IServiceProvider serviceProvider)
         {
             InitializeComponent();
             _chatApiClient = chatApiClient;
             _serviceProvider = serviceProvider;
-            _localDataService = localDataService;
         }
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
@@ -29,7 +27,11 @@ namespace ChatClient
                 var userId = await _chatApiClient.Login(LoginTextBox.Text, PasswordTextBox.Password);
                 if (userId.HasValue)
                 {
-                    await _localDataService.SaveUserAsync(new User { Id = userId.Value, Login = LoginTextBox.Text });
+                    using (var scope = _serviceProvider.CreateScope())
+                    {
+                        var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                        await localDataService.SaveUserAsync(new User { Id = userId.Value, Login = LoginTextBox.Text });
+                    }
 
                     MessageBox.Show("Login successful!");
                     var chatListWindow = _serviceProvider.GetService<ChatListWindow>();

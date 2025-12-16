@@ -31,7 +31,16 @@ namespace ChatServer.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CipherAlgorithm")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CipherMode")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PaddingMode")
                         .HasColumnType("text");
 
                     b.Property<string>("UserIds")

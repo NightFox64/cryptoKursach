@@ -15,6 +15,7 @@ namespace ChatClient.Services
     {
         public CipherAlgorithm CurrentAlgorithm { get; private set; }
         public CipherMode CurrentMode { get; private set; }
+        public PaddingMode CurrentPaddingMode { get; private set; }
 
         // New property to expose the required key size
         public int RequiredKeySize
@@ -35,10 +36,30 @@ namespace ChatClient.Services
             }
         }
 
+        // Property to expose the block size
+        public int BlockSize
+        {
+            get
+            {
+                switch (CurrentAlgorithm)
+                {
+                    case CipherAlgorithm.LOKI97:
+                        return 8; // LOKI97 has 8-byte (64-bit) block size
+                    case CipherAlgorithm.RC6:
+                        return 16; // RC6 has 16-byte (128-bit) block size
+                    case CipherAlgorithm.Aes:
+                        return 16; // AES has 16-byte (128-bit) block size
+                    default:
+                        throw new NotSupportedException($"Cipher algorithm {CurrentAlgorithm} is not supported.");
+                }
+            }
+        }
+
         public EncryptionService()
         {
             CurrentAlgorithm = CipherAlgorithm.Aes; // Default
             CurrentMode = CipherMode.CBC; // Default
+            CurrentPaddingMode = PaddingMode.PKCS7; // Default
         }
 
         public void SetAlgorithm(CipherAlgorithm algorithm)
@@ -49,6 +70,43 @@ namespace ChatClient.Services
         public void SetMode(CipherMode mode)
         {
             CurrentMode = mode;
+        }
+        
+        public void SetCipherAlgorithm(string algorithm)
+        {
+            CurrentAlgorithm = algorithm switch
+            {
+                "LOKI97" => CipherAlgorithm.LOKI97,
+                "RC6" => CipherAlgorithm.RC6,
+                "Aes" => CipherAlgorithm.Aes,
+                _ => CipherAlgorithm.RC6
+            };
+        }
+        
+        public void SetCipherMode(string mode)
+        {
+            CurrentMode = mode switch
+            {
+                "ECB" => CipherMode.ECB,
+                "CBC" => CipherMode.CBC,
+                "PCBC" => CipherMode.PCBC,
+                "CFB" => CipherMode.CFB,
+                "OFB" => CipherMode.OFB,
+                "CTR" => CipherMode.CTR,
+                "RandomDelta" => CipherMode.RandomDelta,
+                _ => CipherMode.CBC
+            };
+        }
+        
+        public void SetPaddingMode(string padding)
+        {
+            CurrentPaddingMode = padding switch
+            {
+                "PKCS7" => PaddingMode.PKCS7,
+                "Zeros" => PaddingMode.Zeros,
+                "None" => PaddingMode.None,
+                _ => PaddingMode.PKCS7
+            };
         }
 
         public byte[] Encrypt(byte[] data, byte[] key, byte[]? iv)
@@ -144,13 +202,19 @@ namespace ChatClient.Services
             }
         }
 
-        private IPaddingMode GetPaddingMode()
+        private IPaddingMode? GetPaddingMode()
         {
-            // For block cipher modes, PKCS7 is generally a good default.
-            // For stream cipher modes (CFB, OFB, CTR, RandomDelta), padding is often not strictly necessary,
-            // but for consistency with the server's message structure, we might need a dummy padding or handle it carefully.
-            // For now, always use PKCS7 and the modes should be adjusted to handle it if applicable.
-            return new PKCS7Padding();
+            switch (CurrentPaddingMode)
+            {
+                case PaddingMode.PKCS7:
+                    return new PKCS7Padding();
+                case PaddingMode.Zeros:
+                    return new ZerosPadding();
+                case PaddingMode.None:
+                    return null; // No padding
+                default:
+                    return new PKCS7Padding();
+            }
         }
 
         private IEncryptionMode GetEncryptionMode(IBlockCipher blockCipher, IPaddingMode? padding)
