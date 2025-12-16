@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "aFh4Atf6TVo=",
+  "dgSpecHash": "HVxIxQ2QzFI=",
   "success": true,
   "projectFilePath": "C:\\Users\\max_d\\OneDrive\\Desktop\\KURSACH\\cryptoKursach\\ChatClient\\ChatClient.csproj",
   "expectedPackageFiles": [
@@ -42,10 +42,12 @@
     "C:\\Users\\max_d\\.nuget\\packages\\open.threading.readwrite\\3.0.1\\open.threading.readwrite.3.0.1.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\open.threading.readwritehelper\\3.0.2\\open.threading.readwritehelper.3.0.2.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\open.threading.tasks\\1.2.2\\open.threading.tasks.1.2.2.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\rabbitmq.client\\7.2.0\\rabbitmq.client.7.2.0.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.6\\sqlitepclraw.bundle_e_sqlite3.2.1.6.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\sqlitepclraw.core\\2.1.6\\sqlitepclraw.core.2.1.6.nupkg.sha512",
     "C:\\Users\\max_d\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.6\\sqlitepclraw.lib.e_sqlite3.2.1.6.nupkg.sha512",
-    "C:\\Users\\max_d\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.6\\sqlitepclraw.provider.e_sqlite3.2.1.6.nupkg.sha512"
+    "C:\\Users\\max_d\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.6\\sqlitepclraw.provider.e_sqlite3.2.1.6.nupkg.sha512",
+    "C:\\Users\\max_d\\.nuget\\packages\\system.threading.ratelimiting\\8.0.0\\system.threading.ratelimiting.8.0.0.nupkg.sha512"
   ],
   "logs": [
     {

@@ -36,6 +36,8 @@ namespace ChatClient
         private DiffieHellman.DiffieHellman? _clientDh; // Client's DH instance
 
         private CancellationTokenSource _cancellationTokenSource;
+        private RabbitMQConsumerService? _rabbitMQConsumer;
+        private bool _useRabbitMQ = true; // Set to true to use RabbitMQ, false for polling
 
         public ObservableCollection<Message> Messages { get; set; }
 
@@ -50,7 +52,90 @@ namespace ChatClient
             ChatHistoryListBox.ItemsSource = Messages;
             
             _cancellationTokenSource = new CancellationTokenSource();
-            Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
+            
+            // Initialize RabbitMQ consumer
+            if (_useRabbitMQ)
+            {
+                _rabbitMQConsumer = new RabbitMQConsumerService();
+                _rabbitMQConsumer.MessageReceived += OnRabbitMQMessageReceived;
+                _ = InitializeRabbitMQAsync();
+            }
+            else
+            {
+                // Fallback to polling
+                Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
+            }
+        }
+
+        private async Task InitializeRabbitMQAsync()
+        {
+            try
+            {
+                bool connected = await _rabbitMQConsumer!.ConnectAsync();
+                if (connected)
+                {
+                    Console.WriteLine("Connected to RabbitMQ successfully");
+                }
+                else
+                {
+                    Console.WriteLine("Failed to connect to RabbitMQ, falling back to polling");
+                    _useRabbitMQ = false;
+                    Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"RabbitMQ initialization failed: {ex.Message}, falling back to polling");
+                _useRabbitMQ = false;
+                Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
+            }
+        }
+
+        private async void OnRabbitMQMessageReceived(object? sender, MessageReceivedEventArgs e)
+        {
+            try
+            {
+                var messageData = e.MessageData;
+                
+                // Skip if we already processed this message
+                if (messageData.DeliveryId <= _lastDeliveryId)
+                    return;
+
+                // Decrypt the content
+                var encryptedBytes = Convert.FromBase64String(messageData.Content ?? "");
+                var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
+                var decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
+
+                var sender_user = await _localDataService.GetUserByIdAsync(messageData.SenderId);
+                var senderLogin = sender_user?.Login ?? "Unknown";
+
+                var message = new Message 
+                { 
+                    ChatId = messageData.ChatId, 
+                    SenderId = messageData.SenderId, 
+                    Content = decryptedContent, 
+                    IsMine = messageData.SenderId == _currentUserId, 
+                    Timestamp = messageData.Timestamp, 
+                    DeliveryId = messageData.DeliveryId 
+                };
+                
+                await _localDataService.AddMessageAsync(message);
+
+                if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                {
+                    message.Content = $"({senderLogin}): {decryptedContent}";
+                }
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    Messages.Add(message);
+                    _lastDeliveryId = messageData.DeliveryId;
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing RabbitMQ message: {ex.Message}");
+            }
         }
 
         public async void InitializeChat(int userId, int chatId)
@@ -68,6 +153,20 @@ namespace ChatClient
 
             _ = LoadChatHistory(); // Load history first
             _ = EstablishSessionKey(); // Then establish a new session key
+            
+            // Subscribe to RabbitMQ queue for this chat
+            if (_useRabbitMQ && _rabbitMQConsumer != null)
+            {
+                try
+                {
+                    await _rabbitMQConsumer.SubscribeToChatAsync(chatId, _cancellationTokenSource.Token);
+                    Console.WriteLine($"Subscribed to RabbitMQ queue for chat {chatId}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to subscribe to RabbitMQ: {ex.Message}");
+                }
+            }
         }
 
         private async Task EstablishSessionKey()
@@ -321,8 +420,53 @@ namespace ChatClient
 
         protected override void OnClosed(EventArgs e)
         {
-            _cancellationTokenSource.Cancel();
-            base.OnClosed(e);
+            try
+            {
+                _cancellationTokenSource.Cancel();
+                
+                // Unsubscribe from RabbitMQ (fire and forget with timeout)
+                if (_useRabbitMQ && _rabbitMQConsumer != null)
+                {
+                    try
+                    {
+                        // Use ConfigureAwait(false) to avoid deadlock and add timeout
+                        var unsubscribeTask = Task.Run(async () => 
+                        {
+                            try
+                            {
+                                await _rabbitMQConsumer.UnsubscribeFromChatAsync(_currentChatId);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error unsubscribing from RabbitMQ: {ex.Message}");
+                            }
+                        });
+                        
+                        // Wait with timeout to prevent hanging
+                        if (!unsubscribeTask.Wait(TimeSpan.FromSeconds(2)))
+                        {
+                            Console.WriteLine("RabbitMQ unsubscribe timeout - continuing with dispose");
+                        }
+                        
+                        _rabbitMQConsumer.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error during RabbitMQ cleanup: {ex.Message}");
+                    }
+                }
+                
+                // Dispose cancellation token source
+                _cancellationTokenSource?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during window cleanup: {ex.Message}");
+            }
+            finally
+            {
+                base.OnClosed(e);
+            }
         }
     }
 }

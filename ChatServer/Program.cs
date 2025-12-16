@@ -15,7 +15,8 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IChatService, ChatService>();
-builder.Services.AddScoped<IMessageBrokerService, MessageBrokerService>();
+// Use Singleton for RabbitMQ connection pooling
+builder.Services.AddSingleton<IMessageBrokerService, MessageBrokerService>();
 builder.Services.AddScoped<ISessionKeyService, SessionKeyService>();
 
 // Register ApplicationDbContext with SQLite
