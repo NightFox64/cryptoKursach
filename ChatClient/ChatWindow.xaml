@@ -11,22 +11,48 @@
     <Window.Resources>
         <converters:ImageConverter x:Key="ImageConverter"/>
         <converters:IsMineToHorizontalAlignmentConverter x:Key="IsMineToAlignmentConverter"/>
+        <converters:SenderNameConverter x:Key="SenderNameConverter"/>
+        <converters:MessageContentConverter x:Key="MessageContentConverter"/>
         <converters:MessageTypeToTemplateConverter x:Key="MessageTypeConverter">
             <converters:MessageTypeToTemplateConverter.TextMessageTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Content}" TextWrapping="Wrap" HorizontalAlignment="{Binding IsMine, Converter={StaticResource IsMineToAlignmentConverter}}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="{Binding IsMine, Converter={StaticResource IsMineToAlignmentConverter}}">
+                        <TextBlock Text="{Binding Content, Converter={StaticResource SenderNameConverter}}" 
+                                   VerticalAlignment="Top" 
+                                   Margin="0,0,5,0"
+                                   FontWeight="SemiBold"
+                                   Foreground="DarkBlue"/>
+                        <TextBlock Text="{Binding Content, Converter={StaticResource MessageContentConverter}}" 
+                                   TextWrapping="Wrap"
+                                   VerticalAlignment="Top"
+                                   MaxWidth="400"/>
+                    </StackPanel>
                 </DataTemplate>
             </converters:MessageTypeToTemplateConverter.TextMessageTemplate>
             <converters:MessageTypeToTemplateConverter.ImageMessageTemplate>
                 <DataTemplate>
-                    <Image Source="{Binding Content, Converter={StaticResource ImageConverter}}" MaxHeight="100" HorizontalAlignment="{Binding IsMine, Converter={StaticResource IsMineToAlignmentConverter}}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="{Binding IsMine, Converter={StaticResource IsMineToAlignmentConverter}}">
+                        <TextBlock Text="{Binding Content, Converter={StaticResource SenderNameConverter}}" 
+                                   VerticalAlignment="Top" 
+                                   Margin="0,0,5,0"
+                                   FontWeight="SemiBold"
+                                   Foreground="DarkBlue"/>
+                        <Image Source="{Binding Content, Converter={StaticResource ImageConverter}}" MaxHeight="100"/>
+                    </StackPanel>
                 </DataTemplate>
             </converters:MessageTypeToTemplateConverter.ImageMessageTemplate>
             <converters:MessageTypeToTemplateConverter.FileMessageTemplate>
                 <DataTemplate>
-                    <StackPanel>
-                        <TextBlock Text="File:" HorizontalAlignment="{Binding IsMine, Converter={StaticResource IsMineToAlignmentConverter}}"/>
-                        <Button Content="Download File" CommandParameter="{Binding Content}"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="{Binding IsMine, Converter={StaticResource IsMineToAlignmentConverter}}">
+                        <TextBlock Text="{Binding Content, Converter={StaticResource SenderNameConverter}}" 
+                                   VerticalAlignment="Top" 
+                                   Margin="0,0,5,0"
+                                   FontWeight="SemiBold"
+                                   Foreground="DarkBlue"/>
+                        <StackPanel>
+                            <TextBlock Text="📎 File" FontWeight="SemiBold"/>
+                            <Button Content="Download" CommandParameter="{Binding Content}" Margin="0,2,0,0"/>
+                        </StackPanel>
                     </StackPanel>
                 </DataTemplate>
             </converters:MessageTypeToTemplateConverter.FileMessageTemplate>
