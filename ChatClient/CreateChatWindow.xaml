@@ -19,9 +19,13 @@
         </Style>
         <Style TargetType="ComboBox">
             <Setter Property="Background" Value="#2d2d30"/>
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
             <Setter Property="BorderBrush" Value="#3f3f46"/>
             <Setter Property="Height" Value="30"/>
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="White"/>
         </Style>
         <Style TargetType="Button">
             <Setter Property="Background" Value="#007acc"/>

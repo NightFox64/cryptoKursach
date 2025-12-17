@@ -39,7 +39,7 @@
             <Setter Property="BorderBrush" Value="#3f3f46"/>
         </Style>
         <Style TargetType="TabItem">
-            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Foreground" Value="Black"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style TargetType="ListBox">
