@@ -143,6 +143,12 @@ namespace ChatClient
                     {
                         Messages.Add(message);
                         _lastDeliveryId = messageData.DeliveryId;
+                        
+                        // Auto-scroll to the new message
+                        if (ChatHistoryListBox.Items.Count > 0)
+                        {
+                            ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
+                        }
                     });
                 }
             }
@@ -357,6 +363,12 @@ namespace ChatClient
                     }
                     Messages.Add(message);
                     MessageTextBox.Clear();
+                    
+                    // Auto-scroll to the new message
+                    if (ChatHistoryListBox.Items.Count > 0)
+                    {
+                        ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
+                    }
                 }
             }
             else
@@ -408,6 +420,12 @@ namespace ChatClient
                                 message.Content = $"({senderLogin}): {messageContent}";
                             }
                             Messages.Add(message);
+                            
+                            // Auto-scroll to the new message
+                            if (ChatHistoryListBox.Items.Count > 0)
+                            {
+                                ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
+                            }
                         }
                     }
                     else
@@ -462,6 +480,12 @@ namespace ChatClient
                                     {
                                         Messages.Add(message);
                                         _lastDeliveryId = serverMessage.DeliveryId;
+                                        
+                                        // Auto-scroll to the new message
+                                        if (ChatHistoryListBox.Items.Count > 0)
+                                        {
+                                            ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
+                                        }
                                     });
                                 }
                             }

@@ -104,7 +104,11 @@
         </Grid.RowDefinitions>
 
         <!-- Chat History -->
-        <ListBox x:Name="ChatHistoryListBox" Grid.Row="0" Margin="5" ItemTemplateSelector="{StaticResource MessageTypeConverter}"/>
+        <ListBox x:Name="ChatHistoryListBox" Grid.Row="0" Margin="5" ItemTemplateSelector="{StaticResource MessageTypeConverter}"
+                 ScrollViewer.CanContentScroll="True"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 VirtualizingPanel.IsVirtualizing="True"
+                 VirtualizingPanel.VirtualizationMode="Recycling"/>
 
         <!-- Message Input -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="5" HorizontalAlignment="Stretch">
