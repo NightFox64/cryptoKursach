@@ -28,8 +28,6 @@ namespace ChatClient.Services
                         return 32; // LOKI97 requires 32-byte key
                     case CipherAlgorithm.RC6:
                         return 16; // RC6 requires 16-byte key
-                    case CipherAlgorithm.Aes:
-                        return 32; // AES-256
                     default:
                         throw new NotSupportedException($"Cipher algorithm {CurrentAlgorithm} is not supported.");
                 }
@@ -47,8 +45,6 @@ namespace ChatClient.Services
                         return 8; // LOKI97 has 8-byte (64-bit) block size
                     case CipherAlgorithm.RC6:
                         return 16; // RC6 has 16-byte (128-bit) block size
-                    case CipherAlgorithm.Aes:
-                        return 16; // AES has 16-byte (128-bit) block size
                     default:
                         throw new NotSupportedException($"Cipher algorithm {CurrentAlgorithm} is not supported.");
                 }
@@ -57,7 +53,7 @@ namespace ChatClient.Services
 
         public EncryptionService()
         {
-            CurrentAlgorithm = CipherAlgorithm.Aes; // Default
+            CurrentAlgorithm = CipherAlgorithm.RC6; // Default
             CurrentMode = CipherMode.CBC; // Default
             CurrentPaddingMode = PaddingMode.PKCS7; // Default
         }
@@ -78,7 +74,6 @@ namespace ChatClient.Services
             {
                 "LOKI97" => CipherAlgorithm.LOKI97,
                 "RC6" => CipherAlgorithm.RC6,
-                "Aes" => CipherAlgorithm.Aes,
                 _ => CipherAlgorithm.RC6
             };
         }
@@ -193,10 +188,6 @@ namespace ChatClient.Services
                     var rc6 = new RC6.RC6();
                     rc6.SetKey(key);
                     return rc6;
-                case CipherAlgorithm.Aes:
-                    var aes = new AesWrapper();
-                    aes.SetKey(key);
-                    return aes;
                 default:
                     throw new NotSupportedException($"Cipher algorithm {CurrentAlgorithm} is not supported.");
             }

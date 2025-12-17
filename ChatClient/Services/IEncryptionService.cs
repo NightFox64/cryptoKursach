@@ -26,8 +26,7 @@ namespace ChatClient.Services
     public enum CipherAlgorithm
     {
         LOKI97,
-        RC6,
-        Aes
+        RC6
     }
 
     public enum CipherMode

@@ -75,31 +75,30 @@
         <StackPanel Grid.Row="2">
             <Label Content="Cipher Algorithm:"/>
             <ComboBox x:Name="AlgorithmComboBox" SelectedIndex="0">
-                <ComboBoxItem Content="RC6"/>
-                <ComboBoxItem Content="LOKI97"/>
-                <ComboBoxItem Content="Aes"/>
+                <ComboBoxItem Content="RC6" Foreground="Black"/>
+                <ComboBoxItem Content="LOKI97" Foreground="Black"/>
             </ComboBox>
         </StackPanel>
 
         <StackPanel Grid.Row="3">
             <Label Content="Cipher Mode:"/>
             <ComboBox x:Name="ModeComboBox" SelectedIndex="1">
-                <ComboBoxItem Content="ECB"/>
-                <ComboBoxItem Content="CBC"/>
-                <ComboBoxItem Content="PCBC"/>
-                <ComboBoxItem Content="CFB"/>
-                <ComboBoxItem Content="OFB"/>
-                <ComboBoxItem Content="CTR"/>
-                <ComboBoxItem Content="RandomDelta"/>
+                <ComboBoxItem Content="ECB" Foreground="Black"/>
+                <ComboBoxItem Content="CBC" Foreground="Black"/>
+                <ComboBoxItem Content="PCBC" Foreground="Black"/>
+                <ComboBoxItem Content="CFB" Foreground="Black"/>
+                <ComboBoxItem Content="OFB" Foreground="Black"/>
+                <ComboBoxItem Content="CTR" Foreground="Black"/>
+                <ComboBoxItem Content="RandomDelta" Foreground="Black"/>
             </ComboBox>
         </StackPanel>
 
         <StackPanel Grid.Row="4">
             <Label Content="Padding Mode:"/>
             <ComboBox x:Name="PaddingComboBox" SelectedIndex="0">
-                <ComboBoxItem Content="PKCS7"/>
-                <ComboBoxItem Content="Zeros"/>
-                <ComboBoxItem Content="None"/>
+                <ComboBoxItem Content="PKCS7" Foreground="Black"/>
+                <ComboBoxItem Content="Zeros" Foreground="Black"/>
+                <ComboBoxItem Content="None" Foreground="Black"/>
             </ComboBox>
         </StackPanel>
 

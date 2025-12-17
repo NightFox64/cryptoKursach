@@ -5,36 +5,79 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatClient"
         mc:Ignorable="d"
-        Title="Chats" Height="450" Width="800"
-        WindowStartupLocation="CenterScreen">
+        Title="Chats" Height="500" Width="800"
+        WindowStartupLocation="CenterScreen"
+        Background="#1e1e1e">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#007acc"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="3" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#005a9e"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="TabControl">
+            <Setter Property="Background" Value="#2d2d30"/>
+            <Setter Property="BorderBrush" Value="#3f3f46"/>
+        </Style>
+        <Style TargetType="TabItem">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="#2d2d30"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#3f3f46"/>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="250"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
         <!-- Contacts and Chats List -->
-        <TabControl Grid.Column="0">
+        <TabControl Grid.Column="0" Margin="10">
             <TabItem Header="Contacts">
                 <StackPanel>
                     <Button Content="Add Contact" Margin="5" Click="AddContactButton_Click"/>
-                    <ListBox x:Name="ContactsListBox" Height="300" Margin="5" SelectionChanged="ContactsListBox_SelectionChanged"/>
+                    <ListBox x:Name="ContactsListBox" Height="350" Margin="5" SelectionChanged="ContactsListBox_SelectionChanged"/>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Chats">
                 <StackPanel>
                     <Button Content="Create Chat" Margin="5" Click="CreateChatButton_Click"/>
-                    <ListBox x:Name="ChatsListBox" Height="300" Margin="5" SelectionChanged="ChatsListBox_SelectionChanged"/>
+                    <ListBox x:Name="ChatsListBox" Height="350" Margin="5" SelectionChanged="ChatsListBox_SelectionChanged"/>
                 </StackPanel>
             </TabItem>
         </TabControl>
 
         <!-- Chat Display Area (placeholder for now) -->
-        <Border Grid.Column="1" BorderBrush="LightGray" BorderThickness="1" Margin="5">
+        <Border Grid.Column="1" BorderBrush="#3f3f46" BorderThickness="1" Margin="10" Background="#2d2d30">
             <TextBlock Text="Select a chat or contact to begin" 
                        VerticalAlignment="Center" 
                        HorizontalAlignment="Center" 
-                       Foreground="Gray"/>
+                       Foreground="#aaa"
+                       FontSize="16"/>
         </Border>
     </Grid>
 </Window>

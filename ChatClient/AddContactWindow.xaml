@@ -1,22 +1,76 @@
 <Window x:Class="ChatClient.AddContactWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Add Contact" Height="150" Width="300"
+        Title="Add Contact" Height="250" Width="450"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize">
-    <Grid Margin="15">
+        ResizeMode="NoResize"
+        Background="#1e1e1e">
+    <Window.Resources>
+        <Style TargetType="Label">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,10,0,5"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#2d2d30"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#3f3f46"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Height" Value="30"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#007acc"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="3" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#005a9e"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Label Content="Enter Contact Login:" Grid.Row="0"/>
-        <TextBox x:Name="ContactLoginTextBox" Grid.Row="1" Margin="0,0,0,10"/>
+        <TextBlock Grid.Row="0" 
+                   Text="Add Contact"
+                   FontSize="24" 
+                   FontWeight="Bold" 
+                   Foreground="White"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,20"/>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Add" Width="75" Click="AddButton_Click"/>
-            <Button Content="Cancel" Width="75" Margin="10,0,0,0" IsCancel="True"/>
+        <StackPanel Grid.Row="1">
+            <Label Content="Enter Contact Login:"/>
+            <TextBox x:Name="ContactLoginTextBox"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Center"
+                    Margin="0,20,0,0">
+            <Button Content="Add" Width="100" Click="AddButton_Click"/>
+            <Button Content="Cancel" Width="100" Background="#555" IsCancel="True"/>
         </StackPanel>
     </Grid>
 </Window>
