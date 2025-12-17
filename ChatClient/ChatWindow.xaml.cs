@@ -102,6 +102,13 @@ namespace ChatClient
                 if (messageData.DeliveryId <= _lastDeliveryId)
                     return;
 
+                // Skip if this is our own message (to prevent duplication when we send)
+                if (messageData.SenderId == _currentUserId)
+                {
+                    _lastDeliveryId = messageData.DeliveryId;
+                    return;
+                }
+
                 // Decrypt the content
                 var encryptedBytes = Convert.FromBase64String(messageData.Content ?? "");
                 var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
@@ -120,7 +127,7 @@ namespace ChatClient
                         ChatId = messageData.ChatId, 
                         SenderId = messageData.SenderId, 
                         Content = decryptedContent, 
-                        IsMine = messageData.SenderId == _currentUserId, 
+                        IsMine = false, // It's not our message since we filtered above
                         Timestamp = messageData.Timestamp, 
                         DeliveryId = messageData.DeliveryId 
                     };
