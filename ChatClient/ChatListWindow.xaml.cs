@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using ChatClient.Models; // Using client-specific models
 using ChatClient.Shared.Models.DTO; // Using shared DTOs
 using ChatClient.Shared.Models; // Added for shared Chat model
+using System.Windows.Threading; // Added for DispatcherTimer
 
 namespace ChatClient
 {
@@ -20,6 +21,7 @@ namespace ChatClient
         private readonly IEncryptionService _encryptionService;
         private readonly IServiceProvider _serviceProvider;
         private int _currentUserId;
+        private DispatcherTimer _refreshTimer;
 
         public ChatListWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, IServiceProvider serviceProvider)
         {
@@ -29,6 +31,11 @@ namespace ChatClient
             _serviceProvider = serviceProvider;
             ContactsListBox.DisplayMemberPath = "ContactUserName";
             ChatsListBox.DisplayMemberPath = "Name";
+            
+            // Setup auto-refresh timer (every 3 seconds)
+            _refreshTimer = new DispatcherTimer();
+            _refreshTimer.Interval = TimeSpan.FromSeconds(3);
+            _refreshTimer.Tick += async (s, e) => await AutoRefresh();
         }
 
         public async void InitializeChat(int userId)
@@ -36,6 +43,22 @@ namespace ChatClient
             _currentUserId = userId;
             await RefreshContacts();
             await RefreshChats();
+            
+            // Start auto-refresh timer
+            _refreshTimer.Start();
+        }
+        
+        private async Task AutoRefresh()
+        {
+            try
+            {
+                await RefreshContacts();
+                await RefreshChats();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Auto-refresh error: {ex.Message}");
+            }
         }
 
         private async Task RefreshContacts()
@@ -169,6 +192,13 @@ namespace ChatClient
         private async void CreateChatButton_Click(object sender, RoutedEventArgs e)
         {
             MessageBox.Show("Please select a contact to create a chat with them.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        
+        protected override void OnClosed(EventArgs e)
+        {
+            // Stop the refresh timer when window closes
+            _refreshTimer?.Stop();
+            base.OnClosed(e);
         }
     }
 }
