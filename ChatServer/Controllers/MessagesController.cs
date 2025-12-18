@@ -11,10 +11,12 @@ namespace ChatServer.Controllers
     public class MessagesController : ControllerBase
     {
         private readonly IMessageBrokerService _messageBrokerService;
+        private readonly WebSocketHandler _webSocketHandler;
 
-        public MessagesController(IMessageBrokerService messageBrokerService)
+        public MessagesController(IMessageBrokerService messageBrokerService, WebSocketHandler webSocketHandler)
         {
             _messageBrokerService = messageBrokerService;
+            _webSocketHandler = webSocketHandler;
         }
 
         [HttpPost("send")]
@@ -32,6 +34,19 @@ namespace ChatServer.Controllers
                     // Files = clientMessage.Files // Need to handle file conversion if applicable
                 };
                 await _messageBrokerService.SendMessage(serverMessage);
+                
+                // Notify via WebSocket
+                var wsMessage = new
+                {
+                    Id = serverMessage.Id,
+                    ChatId = serverMessage.ChatId,
+                    SenderId = serverMessage.SenderId,
+                    Content = serverMessage.Content,
+                    DeliveryId = serverMessage.Id,
+                    Timestamp = serverMessage.Timestamp
+                };
+                _ = WebSocketHandler.NotifyNewMessageAsync(serverMessage.ChatId, wsMessage);
+                
                 return Ok();
             }
             catch (Exception ex)

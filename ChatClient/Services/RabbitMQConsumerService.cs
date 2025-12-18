@@ -1,6 +1,7 @@
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -15,6 +16,8 @@ namespace ChatClient.Services
         private bool _disposed = false;
         private readonly string _exchangeName = "chat.exchange";
         private readonly string _queuePrefix = "chat.queue";
+        private readonly Dictionary<int, string> _consumerTags = new Dictionary<int, string>();
+        private readonly Dictionary<int, AsyncEventingBasicConsumer> _consumers = new Dictionary<int, AsyncEventingBasicConsumer>();
 
         public event EventHandler<MessageReceivedEventArgs>? MessageReceived;
 
@@ -47,7 +50,7 @@ namespace ChatClient.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to connect to RabbitMQ: {ex.Message}");
+                FileLogger.Log($"Failed to connect to RabbitMQ: {ex.Message}");
                 return false;
             }
         }
@@ -59,9 +62,18 @@ namespace ChatClient.Services
                 throw new InvalidOperationException("Not connected to RabbitMQ. Call ConnectAsync first.");
             }
 
+            // If already subscribed, unsubscribe first
+            if (_consumerTags.ContainsKey(chatId))
+            {
+                FileLogger.Log($"Already subscribed to chat {chatId}, unsubscribing first...");
+                await UnsubscribeFromChatAsync(chatId);
+            }
+
             string queueName = $"{_queuePrefix}.{chatId}";
             string routingKey = $"chat.{chatId}";
 
+            FileLogger.Log($"[RabbitMQ] Declaring queue: {queueName}");
+            
             // Declare queue
             await _channel.QueueDeclareAsync(
                 queue: queueName,
@@ -78,56 +90,81 @@ namespace ChatClient.Services
                 routingKey: routingKey
             );
 
-            // Create consumer
+            FileLogger.Log($"[RabbitMQ] Queue bound to exchange with routing key: {routingKey}");
+
+            // Create consumer and store it to prevent GC
             var consumer = new AsyncEventingBasicConsumer(_channel);
+            _consumers[chatId] = consumer;
+            
             consumer.ReceivedAsync += async (model, ea) =>
             {
                 try
                 {
+                    FileLogger.Log($"[RabbitMQ] Message received from queue {queueName}");
+                    
                     var body = ea.Body.ToArray();
                     var message = Encoding.UTF8.GetString(body);
+                    
+                    FileLogger.Log($"[RabbitMQ] Raw message: {message}");
                     
                     var messageData = JsonSerializer.Deserialize<MessageData>(message);
                     if (messageData != null)
                     {
+                        FileLogger.Log($"[RabbitMQ] Invoking MessageReceived event for chat {messageData.ChatId}");
                         MessageReceived?.Invoke(this, new MessageReceivedEventArgs(messageData));
                     }
 
                     // Acknowledge the message
                     await _channel.BasicAckAsync(ea.DeliveryTag, false);
+                    FileLogger.Log($"[RabbitMQ] Message acknowledged");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error processing message: {ex.Message}");
+                    FileLogger.Log($"[RabbitMQ] Error processing message: {ex.Message}");
+                    FileLogger.Log($"[RabbitMQ] Stack trace: {ex.StackTrace}");
                     // Reject the message and requeue
                     await _channel.BasicNackAsync(ea.DeliveryTag, false, true);
                 }
-
-                await Task.CompletedTask;
             };
 
-            // Start consuming
-            await _channel.BasicConsumeAsync(
+            // Start consuming and store the consumer tag
+            var consumerTag = await _channel.BasicConsumeAsync(
                 queue: queueName,
                 autoAck: false,
                 consumer: consumer
             );
+            
+            _consumerTags[chatId] = consumerTag;
+            FileLogger.Log($"[RabbitMQ] Consumer started with tag: {consumerTag}");
         }
 
         public async Task UnsubscribeFromChatAsync(int chatId)
         {
             if (_channel == null) return;
 
-            string queueName = $"{_queuePrefix}.{chatId}";
-            
             try
             {
-                // Delete queue when unsubscribing
-                await _channel.QueueDeleteAsync(queueName, false, false);
+                // Cancel consumer if exists
+                if (_consumerTags.TryGetValue(chatId, out var consumerTag))
+                {
+                    await _channel.BasicCancelAsync(consumerTag);
+                    _consumerTags.Remove(chatId);
+                    FileLogger.Log($"[RabbitMQ] Consumer {consumerTag} cancelled for chat {chatId}");
+                }
+
+                // Remove consumer reference
+                if (_consumers.ContainsKey(chatId))
+                {
+                    _consumers.Remove(chatId);
+                }
+
+                // Note: We don't delete the queue anymore, just unsubscribe
+                // This allows messages to accumulate if client reconnects
+                FileLogger.Log($"[RabbitMQ] Unsubscribed from chat {chatId}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to unsubscribe from chat {chatId}: {ex.Message}");
+                FileLogger.Log($"[RabbitMQ] Failed to unsubscribe from chat {chatId}: {ex.Message}");
             }
         }
 
@@ -135,9 +172,12 @@ namespace ChatClient.Services
         {
             if (!_disposed)
             {
+                _consumers.Clear();
+                _consumerTags.Clear();
                 _channel?.Dispose();
                 _connection?.Dispose();
                 _disposed = true;
+                FileLogger.Log("[RabbitMQ] RabbitMQConsumerService disposed");
             }
         }
     }

@@ -10,6 +10,10 @@ using ChatServer.Middleware; // Added for custom middleware
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://localhost:5280", "https://localhost:7252");
 
+// Initialize file logger
+ChatServer.Services.FileLogger.Initialize();
+ChatServer.Services.FileLogger.Log("=== Chat Server Starting ===");
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
@@ -18,6 +22,7 @@ builder.Services.AddScoped<IChatService, ChatService>();
 // Use Singleton for RabbitMQ connection pooling
 builder.Services.AddSingleton<IMessageBrokerService, MessageBrokerService>();
 builder.Services.AddScoped<ISessionKeyService, SessionKeyService>();
+builder.Services.AddSingleton<WebSocketHandler>();
 
 // Register ApplicationDbContext with SQLite
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -72,8 +77,34 @@ if (app.Environment.IsDevelopment())
 
 // app.UseHttpsRedirection();
 
+// Enable WebSocket support
+app.UseWebSockets();
+
 app.UseAuthentication(); // Use authentication middleware
 app.UseAuthorization();  // Use authorization middleware
+
+// WebSocket endpoint for chat messages
+app.Map("/ws/chat/{chatId}", async (HttpContext context, int chatId, WebSocketHandler wsHandler) =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        // Get userId from query parameter (in production, use JWT token)
+        if (!context.Request.Query.TryGetValue("userId", out var userIdStr) || 
+            !int.TryParse(userIdStr, out var userId))
+        {
+            context.Response.StatusCode = 400;
+            await context.Response.WriteAsync("Missing or invalid userId parameter");
+            return;
+        }
+
+        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+        await wsHandler.HandleWebSocketAsync(webSocket, userId, chatId);
+    }
+    else
+    {
+        context.Response.StatusCode = 400;
+    }
+});
 
 app.MapControllers();
 

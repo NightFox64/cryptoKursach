@@ -1,0 +1,45 @@
+=== Chat Client Log Started at 2025-12-18 22:27:09 ===
+[22:27:09.260] Log file initialized at: C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\chat_client_logs.txt
+[22:27:09.261] === Application Starting ===
+[22:27:38.672] [ChatView] InitializeChat called: userId=1, chatId=27, current=0
+[22:27:38.733] [ChatView] Attempting WebSocket connection for chat 27...
+[22:27:38.735] [WebSocket] Connecting to ws://localhost:5280/ws/chat/27?userId=1
+[22:27:38.750] [WebSocket] Connected successfully (State: Open)
+[22:27:38.753] [ChatView] ✓ Connected to WebSocket for chat 27
+[22:27:39.197] Session key established successfully.
+[22:27:43.556] [ChatView] InitializeChat called: userId=2, chatId=27, current=0
+[22:27:43.625] [ChatView] Attempting WebSocket connection for chat 27...
+[22:27:43.627] [WebSocket] Connecting to ws://localhost:5280/ws/chat/27?userId=2
+[22:27:43.636] [WebSocket] Connected successfully (State: Open)
+[22:27:43.639] [ChatView] ✓ Connected to WebSocket for chat 27
+[22:27:44.451] Session key established successfully.
+[22:27:49.976] [WebSocket] Received: {"Id":209,"ChatId":27,"SenderId":1,"Content":"0z1tcdI/xMiateCYBml6/w==","DeliveryId":209,"Timestamp":"2025-12-18T19:27:49.9219043Z"}
+[22:27:49.978] [WebSocket] Received: {"Id":209,"ChatId":27,"SenderId":1,"Content":"0z1tcdI/xMiateCYBml6/w==","DeliveryId":209,"Timestamp":"2025-12-18T19:27:49.9219043Z"}
+[22:27:49.979] [WebSocket] Invoking MessageReceived event
+[22:27:49.980] [WebSocket] Invoking MessageReceived event
+[22:27:49.980] [WebSocket] ★★★ Message received: ChatId=27, SenderId=1, DeliveryId=209
+[22:27:49.981] [WebSocket] Current chat: 27, Current user: 1
+[22:27:49.981] [WebSocket] Skipping own message
+[22:27:49.982] [WebSocket] ★★★ Message received: ChatId=27, SenderId=1, DeliveryId=209
+[22:27:49.983] [WebSocket] Current chat: 27, Current user: 2
+[22:27:49.989] [WebSocket] Decryption failed (Invalid padding). Message will show as [Encrypted]
+[22:27:50.086] [WebSocket] About to add message to Messages collection (current count: 21)
+[22:27:50.087] [WebSocket] ✓ Message added! New count: 22
+[22:27:50.087] [WebSocket] Message from 1: [Encrypted message - decryption failed]
+[22:27:50.087] [WebSocket] Scrolling to last item (ListBox count: 22)
+[22:27:58.157] [WebSocket] Received: {"Id":210,"ChatId":27,"SenderId":2,"Content":"0UChx8MQ2WI64Rfpp/ylKA==","DeliveryId":210,"Timestamp":"2025-12-18T19:27:58.1500705Z"}
+[22:27:58.157] [WebSocket] Invoking MessageReceived event
+[22:27:58.158] [WebSocket] Invoking MessageReceived event
+[22:27:58.158] [WebSocket] ★★★ Message received: ChatId=27, SenderId=2, DeliveryId=210
+[22:27:58.158] [WebSocket] Skipping own message
+[22:27:58.160] [WebSocket] Decryption failed (Invalid padding). Message will show as [Encrypted]
+[22:27:58.165] [WebSocket] About to add message to Messages collection (current count: 22)
+[22:27:58.166] [WebSocket] ✓ Message added! New count: 23
+[22:27:58.166] [WebSocket] Message from 2: [Encrypted message - decryption failed]
+[22:27:58.166] [WebSocket] Scrolling to last item (ListBox count: 23)
+[22:28:02.771] [WebSocket] WebSocketService disposed
+[22:28:02.772] [RabbitMQ] RabbitMQConsumerService disposed
+[22:28:02.775] [WebSocket] Receive loop cancelled
+[22:28:03.818] [WebSocket] WebSocketService disposed
+[22:28:03.819] [RabbitMQ] RabbitMQConsumerService disposed
+[22:28:03.821] [WebSocket] Receive loop cancelled

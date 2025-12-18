@@ -1,0 +1,13 @@
+=== Chat Server Log Started at 2025-12-18 22:26:57 ===
+[22:26:57.816] Log file initialized at: C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\chat_server_logs.txt
+[22:26:57.818] === Chat Server Starting ===
+[22:27:38.749] [WebSocket] New connection: UserId=1, ChatId=27
+[22:27:43.632] [WebSocket] New connection: UserId=2, ChatId=27
+[22:27:49.971] [WebSocket] Broadcasting to chat 27: {"Id":209,"ChatId":27,"SenderId":1,"Content":"0z1tcdI/xMiateCYBml6/w==","DeliveryId":209,"Timestamp":"2025-12-18T19:27:49.9219043Z"}
+[22:27:49.973] [WebSocket] Broadcast complete for chat 27
+[22:27:58.156] [WebSocket] Broadcasting to chat 27: {"Id":210,"ChatId":27,"SenderId":2,"Content":"0UChx8MQ2WI64Rfpp/ylKA==","DeliveryId":210,"Timestamp":"2025-12-18T19:27:58.1500705Z"}
+[22:27:58.156] [WebSocket] Broadcast complete for chat 27
+[22:28:02.774] [WebSocket] WebSocket error: The remote party closed the WebSocket connection without completing the close handshake.
+[22:28:02.775] [WebSocket] Removing connection: UserId=2, ChatId=27
+[22:28:03.818] [WebSocket] WebSocket error: The remote party closed the WebSocket connection without completing the close handshake.
+[22:28:03.819] [WebSocket] Removing connection: UserId=1, ChatId=27

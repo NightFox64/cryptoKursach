@@ -60,6 +60,10 @@ namespace ChatClient
         {
             base.OnStartup(e);
 
+            // Initialize file logger
+            Services.FileLogger.Initialize();
+            Services.FileLogger.Log("=== Application Starting ===");
+
             try
             {
                 var localDataService = _serviceProvider.GetService<ILocalDataService>();
@@ -73,6 +77,8 @@ namespace ChatClient
             }
             catch (Exception ex)
             {
+                Services.FileLogger.Log($"FATAL: Unhandled exception during startup: {ex.Message}");
+                Services.FileLogger.Log($"Stack trace: {ex.StackTrace}");
                 Console.WriteLine($"An unhandled exception occurred during startup: {ex.Message}");
                 Console.WriteLine(ex.StackTrace);
                 MessageBox.Show($"An unhandled error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);

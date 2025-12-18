@@ -35,7 +35,9 @@ namespace ChatClient
 
         private CancellationTokenSource _cancellationTokenSource;
         private RabbitMQConsumerService? _rabbitMQConsumer;
+        private WebSocketService? _webSocketService;
         private bool _useRabbitMQ = true;
+        private bool _useWebSocket = true;
         private DispatcherTimer _messageRefreshTimer;
 
         public ObservableCollection<Message> Messages { get; set; }
@@ -52,10 +54,17 @@ namespace ChatClient
             
             _cancellationTokenSource = new CancellationTokenSource();
             
-            // Setup automatic message refresh timer (every 2 seconds)
+            // Setup automatic message refresh timer (every 1 second) - same pattern as contacts/chats refresh
             _messageRefreshTimer = new DispatcherTimer();
-            _messageRefreshTimer.Interval = TimeSpan.FromSeconds(2);
+            _messageRefreshTimer.Interval = TimeSpan.FromSeconds(1);
             _messageRefreshTimer.Tick += async (s, e) => await CheckForNewMessages();
+            
+            // Initialize WebSocket service (but don't connect yet - wait for InitializeChat)
+            if (_useWebSocket)
+            {
+                _webSocketService = new WebSocketService();
+                _webSocketService.MessageReceived += OnWebSocketMessageReceived;
+            }
             
             // Initialize RabbitMQ consumer (but don't connect yet - wait for InitializeChat)
             if (_useRabbitMQ)
@@ -63,10 +72,97 @@ namespace ChatClient
                 _rabbitMQConsumer = new RabbitMQConsumerService();
                 _rabbitMQConsumer.MessageReceived += OnRabbitMQMessageReceived;
             }
-            else
+        }
+
+        private async void OnWebSocketMessageReceived(object? sender, MessageReceivedEventArgs e)
+        {
+            try
             {
-                // Fallback to polling
-                Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
+                var messageData = e.MessageData;
+                
+                FileLogger.Log($"[WebSocket] ★★★ Message received: ChatId={messageData.ChatId}, SenderId={messageData.SenderId}, DeliveryId={messageData.DeliveryId}");
+                FileLogger.Log($"[WebSocket] Current chat: {_currentChatId}, Current user: {_currentUserId}");
+                
+                // Skip if we already processed this message
+                if (messageData.DeliveryId <= _lastDeliveryId)
+                {
+                    FileLogger.Log($"[WebSocket] Skipping duplicate message: {messageData.DeliveryId} <= {_lastDeliveryId}");
+                    return;
+                }
+
+                // Skip if this is our own message (to prevent duplication when we send)
+                if (messageData.SenderId == _currentUserId)
+                {
+                    FileLogger.Log($"[WebSocket] Skipping own message");
+                    _lastDeliveryId = messageData.DeliveryId;
+                    return;
+                }
+
+                // Decrypt the content
+                string decryptedContent;
+                try
+                {
+                    var encryptedBytes = Convert.FromBase64String(messageData.Content ?? "");
+                    var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
+                    decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
+                    FileLogger.Log($"[WebSocket] Successfully decrypted message");
+                }
+                catch (Exception decryptEx)
+                {
+                    FileLogger.Log($"[WebSocket] Decryption failed ({decryptEx.Message}). Message will show as [Encrypted]");
+                    decryptedContent = $"[Encrypted message - decryption failed]";
+                }
+
+                // Create a new scope for database operations to avoid threading issues
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                    
+                    var sender_user = await localDataService.GetUserByIdAsync(messageData.SenderId);
+                    var senderLogin = sender_user?.Login ?? "Unknown";
+
+                    var message = new Message 
+                    { 
+                        ChatId = messageData.ChatId, 
+                        SenderId = messageData.SenderId, 
+                        Content = decryptedContent, 
+                        IsMine = false, // It's not our message since we filtered above
+                        Timestamp = messageData.Timestamp, 
+                        DeliveryId = messageData.DeliveryId 
+                    };
+                    
+                    await localDataService.AddMessageAsync(message);
+
+                    if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                    {
+                        message.Content = $"({senderLogin}): {decryptedContent}";
+                    }
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        FileLogger.Log($"[WebSocket] About to add message to Messages collection (current count: {Messages.Count})");
+                        Messages.Add(message);
+                        FileLogger.Log($"[WebSocket] ✓ Message added! New count: {Messages.Count}");
+                        _lastDeliveryId = messageData.DeliveryId;
+                        
+                        FileLogger.Log($"[WebSocket] Message from {senderLogin}: {decryptedContent}");
+                        
+                        // Auto-scroll to the new message
+                        if (ChatHistoryListBox.Items.Count > 0)
+                        {
+                            FileLogger.Log($"[WebSocket] Scrolling to last item (ListBox count: {ChatHistoryListBox.Items.Count})");
+                            ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
+                        }
+                        else
+                        {
+                            FileLogger.Log($"[WebSocket] WARNING: ChatHistoryListBox.Items is empty!");
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                FileLogger.Log($"[WebSocket] Error processing message: {ex.Message}");
             }
         }
 
@@ -132,12 +228,46 @@ namespace ChatClient
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error processing RabbitMQ message: {ex.Message}");
+                FileLogger.Log($"Error processing RabbitMQ message: {ex.Message}");
             }
         }
 
         public async void InitializeChat(int userId, int chatId, Chat? chat = null)
         {
+            FileLogger.Log($"[ChatView] InitializeChat called: userId={userId}, chatId={chatId}, current={_currentChatId}");
+            
+            // If reopening the same chat, just return - don't reconnect
+            if (_currentChatId == chatId && _currentUserId == userId)
+            {
+                FileLogger.Log($"[ChatView] Chat {chatId} already open, skipping initialization");
+                return;
+            }
+            
+            // If switching to a different chat, cleanup the old one first
+            if (_currentChatId > 0 && _currentChatId != chatId)
+            {
+                FileLogger.Log($"[ChatView] Switching from chat {_currentChatId} to {chatId}, cleaning up...");
+                
+                // Stop timer temporarily
+                _messageRefreshTimer?.Stop();
+                
+                // Disconnect WebSocket
+                if (_webSocketService != null)
+                {
+                    await _webSocketService.DisconnectAsync();
+                }
+                
+                // Unsubscribe from RabbitMQ
+                if (_useRabbitMQ && _rabbitMQConsumer != null && _currentChatId > 0)
+                {
+                    await _rabbitMQConsumer.UnsubscribeFromChatAsync(_currentChatId);
+                }
+                
+                // Clear messages
+                Messages.Clear();
+                _lastDeliveryId = 0;
+            }
+            
             _currentUserId = userId;
             _currentChatId = chatId;
             
@@ -185,8 +315,36 @@ namespace ChatClient
                 }
             }
 
-            // Initialize RabbitMQ connection and subscribe BEFORE loading history
-            if (_useRabbitMQ && _rabbitMQConsumer != null)
+            // Try WebSocket first
+            if (_useWebSocket && _webSocketService != null)
+            {
+                try
+                {
+                    FileLogger.Log($"[ChatView] Attempting WebSocket connection for chat {chatId}...");
+                    bool connected = await _webSocketService.ConnectAsync(userId, chatId);
+                    if (connected)
+                    {
+                        FileLogger.Log($"[ChatView] ✓ Connected to WebSocket for chat {chatId}");
+                    }
+                    else
+                    {
+                        FileLogger.Log("[ChatView] ✗ Failed to connect to WebSocket, trying RabbitMQ");
+                        _useWebSocket = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Log($"[ChatView] ✗ WebSocket initialization failed: {ex.Message}, trying RabbitMQ");
+                    _useWebSocket = false;
+                }
+            }
+            else
+            {
+                FileLogger.Log($"[ChatView] WebSocket disabled (_useWebSocket={_useWebSocket}, _webSocketService={_webSocketService != null})");
+            }
+            
+            // Initialize RabbitMQ connection and subscribe if WebSocket failed
+            if (!_useWebSocket && _useRabbitMQ && _rabbitMQConsumer != null)
             {
                 try
                 {
@@ -194,27 +352,25 @@ namespace ChatClient
                     if (connected)
                     {
                         await _rabbitMQConsumer.SubscribeToChatAsync(chatId, _cancellationTokenSource.Token);
-                        Console.WriteLine($"Connected to RabbitMQ and subscribed to chat {chatId}");
+                        FileLogger.Log($"[ChatView] Connected to RabbitMQ and subscribed to chat {chatId}");
                     }
                     else
                     {
-                        Console.WriteLine("Failed to connect to RabbitMQ, falling back to polling");
+                        FileLogger.Log("[ChatView] Failed to connect to RabbitMQ, falling back to polling");
                         _useRabbitMQ = false;
-                        Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"RabbitMQ initialization failed: {ex.Message}, falling back to polling");
+                    FileLogger.Log($"[ChatView] RabbitMQ initialization failed: {ex.Message}, falling back to polling");
                     _useRabbitMQ = false;
-                    Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
                 }
             }
 
-            _ = LoadChatHistory(); // Load history first
-            _ = EstablishSessionKey(); // Then establish a new session key
+            await LoadChatHistory(); // Load history first
+            await EstablishSessionKey(); // Then establish a new session key
             
-            // Start automatic message refresh timer
+            // Start automatic message refresh timer - ALWAYS start it (same as contacts/chats)
             _messageRefreshTimer.Start();
         }
 
@@ -222,6 +378,12 @@ namespace ChatClient
         {
             // Stop timer
             _messageRefreshTimer?.Stop();
+            
+            // Disconnect WebSocket
+            if (_webSocketService != null)
+            {
+                _ = _webSocketService.DisconnectAsync();
+            }
             
             // Unsubscribe from RabbitMQ
             if (_useRabbitMQ && _rabbitMQConsumer != null && _currentChatId > 0)
@@ -276,16 +438,16 @@ namespace ChatClient
                             _iv = sha256_iv.ComputeHash(iv_seed).Take(requiredIvLength).ToArray();
                         }
                     }
-                    Console.WriteLine("Session key established successfully.");
+                    FileLogger.Log("Session key established successfully.");
                 }
                 else
                 {
-                    Console.WriteLine("Failed to establish session key: Server response empty.");
+                    FileLogger.Log("Failed to establish session key: Server response empty.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error establishing session key: {ex.Message}");
+                FileLogger.Log($"Error establishing session key: {ex.Message}");
             }
         }
 
@@ -343,86 +505,79 @@ namespace ChatClient
 
         private async Task CheckForNewMessages()
         {
+            // Simple polling check - same pattern as contacts/chats refresh
             try
             {
-                if (_currentChatId > 0 && _sessionKey != null && _sessionKey.Length > 0)
+                if (_currentChatId <= 0) return;
+                
+                // Check if session key is established
+                if (_sessionKey == null || _sessionKey.Length == 0)
                 {
-                    var serverMessage = await _chatApiClient.ReceiveEncryptedFragment(_currentChatId, _lastDeliveryId);
-                    if (serverMessage != null && serverMessage.Content != null)
+                    FileLogger.Log("Session key not established yet, skipping message check");
+                    return;
+                }
+
+                var serverMessage = await _chatApiClient.ReceiveEncryptedFragment(_currentChatId, _lastDeliveryId);
+                if (serverMessage != null && serverMessage.Content != null)
+                {
+                    try
                     {
-                        try
-                        {
-                            var encryptedBytes = Convert.FromBase64String(serverMessage.Content);
-                            var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
-                            var decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
+                        var encryptedBytes = Convert.FromBase64String(serverMessage.Content);
+                        var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
+                        var decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
 
-                            using (var scope = _serviceProvider.CreateScope())
+                        using (var scope = _serviceProvider.CreateScope())
+                        {
+                            var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                            
+                            var sender = await localDataService.GetUserByIdAsync(serverMessage.SenderId);
+                            var senderLogin = sender?.Login ?? "Unknown";
+
+                            var message = new Message 
+                            { 
+                                ChatId = _currentChatId, 
+                                SenderId = serverMessage.SenderId, 
+                                Content = decryptedContent, 
+                                IsMine = serverMessage.SenderId == _currentUserId, 
+                                Timestamp = serverMessage.Timestamp, 
+                                DeliveryId = serverMessage.DeliveryId 
+                            };
+                            await localDataService.AddMessageAsync(message);
+
+                            if (!decryptedContent.StartsWith($"({senderLogin}): "))
                             {
-                                var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                                message.Content = $"({senderLogin}): {decryptedContent}";
+                            }
+
+                            Dispatcher.Invoke(() =>
+                            {
+                                Messages.Add(message);
+                                _lastDeliveryId = serverMessage.DeliveryId;
                                 
-                                var sender = await localDataService.GetUserByIdAsync(serverMessage.SenderId);
-                                var senderLogin = sender?.Login ?? "Unknown";
-
-                                var message = new Message 
-                                { 
-                                    ChatId = _currentChatId, 
-                                    SenderId = serverMessage.SenderId, 
-                                    Content = decryptedContent, 
-                                    IsMine = serverMessage.SenderId == _currentUserId, 
-                                    Timestamp = serverMessage.Timestamp, 
-                                    DeliveryId = serverMessage.DeliveryId 
-                                };
-                                await localDataService.AddMessageAsync(message);
-
-                                if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                                FileLogger.Log($"[CheckForNewMessages] Added message from {senderLogin}: {decryptedContent}");
+                                
+                                // Auto-scroll to the new message
+                                if (ChatHistoryListBox.Items.Count > 0)
                                 {
-                                    message.Content = $"({senderLogin}): {decryptedContent}";
+                                    ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
                                 }
-
-                                Dispatcher.Invoke(() =>
-                                {
-                                    Messages.Add(message);
-                                    _lastDeliveryId = serverMessage.DeliveryId;
-                                    
-                                    // Auto-scroll to the new message
-                                    if (ChatHistoryListBox.Items.Count > 0)
-                                    {
-                                        ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
-                                    }
-                                });
-                            }
+                            });
                         }
-                        catch (Exception ex)
+                    }
+                    catch (Exception ex)
+                    {
+                        // Decryption failed, probably old session, ignore.
+                        FileLogger.Log($"Error decrypting message: {ex.Message}");
+                        if(serverMessage != null)
                         {
-                            // Decryption failed, probably old session, ignore.
-                            Console.WriteLine($"Error decrypting message: {ex.Message}");
-                            if(serverMessage != null)
-                            {
-                                _lastDeliveryId = serverMessage.DeliveryId; // Still update delivery ID to not get stuck
-                            }
+                            _lastDeliveryId = serverMessage.DeliveryId; // Still update delivery ID to not get stuck
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error checking for new messages: {ex.Message}");
-            }
-        }
-
-        private async Task ReceiveMessagesLoop(CancellationToken cancellationToken)
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await CheckForNewMessages();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error receiving messages: {ex.Message}");
-                }
-                await Task.Delay(1000, cancellationToken);
+                FileLogger.Log($"Error checking for new messages: {ex.Message}");
             }
         }
 
@@ -539,6 +694,12 @@ namespace ChatClient
         {
             _cancellationTokenSource?.Cancel();
             _messageRefreshTimer?.Stop();
+            
+            if (_webSocketService != null)
+            {
+                _webSocketService.MessageReceived -= OnWebSocketMessageReceived;
+                _webSocketService.Dispose();
+            }
             
             if (_rabbitMQConsumer != null)
             {
