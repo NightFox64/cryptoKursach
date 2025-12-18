@@ -1,29 +1,26 @@
 using ChatClient.Services;
 using ChatClient.Shared;
+using ChatClient.Shared.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
+using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using ChatClient.Shared.Models; // Added for shared models
-using System.Numerics; // Added for BigInteger
-using DiffieHellman; // Added for DiffieHellman class
-using System.Security.Cryptography; // Added for SHA256
-using System.Linq; // Added for Concat and Take
-using Microsoft.Extensions.DependencyInjection; // Added for IServiceProvider scoping
-using System.Windows.Threading; // Added for DispatcherTimer
+using System.Windows.Threading;
+using DiffieHellman;
 
 namespace ChatClient
 {
-    /// <summary>
-    /// Interaction logic for ChatWindow.xaml
-    /// </summary>
-    public partial class ChatWindow : Window
+    public partial class ChatView : UserControl
     {
         private readonly IChatApiClient _chatApiClient;
         private readonly IEncryptionService _encryptionService;
@@ -32,19 +29,18 @@ namespace ChatClient
         private int _currentChatId;
         private long _lastDeliveryId = 0;
 
-        private byte[] _sessionKey = new byte[32]; // Will be set by DH
-        private byte[] _iv = Array.Empty<byte>(); // Will be set by DH based on algorithm
-
-        private DiffieHellman.DiffieHellman? _clientDh; // Client's DH instance
+        private byte[] _sessionKey = new byte[32];
+        private byte[] _iv = Array.Empty<byte>();
+        private DiffieHellman.DiffieHellman? _clientDh;
 
         private CancellationTokenSource _cancellationTokenSource;
         private RabbitMQConsumerService? _rabbitMQConsumer;
-        private bool _useRabbitMQ = true; // Set to true to use RabbitMQ, false for polling
-        private DispatcherTimer _messageRefreshTimer; // Timer for automatic message refresh
+        private bool _useRabbitMQ = true;
+        private DispatcherTimer _messageRefreshTimer;
 
         public ObservableCollection<Message> Messages { get; set; }
 
-        public ChatWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, IServiceProvider serviceProvider)
+        public ChatView(IChatApiClient chatApiClient, IEncryptionService encryptionService, IServiceProvider serviceProvider)
         {
             InitializeComponent();
             _chatApiClient = chatApiClient;
@@ -73,7 +69,6 @@ namespace ChatClient
                 Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
             }
         }
-
 
         private async void OnRabbitMQMessageReceived(object? sender, MessageReceivedEventArgs e)
         {
@@ -122,7 +117,7 @@ namespace ChatClient
                         message.Content = $"({senderLogin}): {decryptedContent}";
                     }
 
-                    Application.Current.Dispatcher.Invoke(() =>
+                    Dispatcher.Invoke(() =>
                     {
                         Messages.Add(message);
                         _lastDeliveryId = messageData.DeliveryId;
@@ -146,6 +141,10 @@ namespace ChatClient
             _currentUserId = userId;
             _currentChatId = chatId;
             
+            // Show the chat UI
+            RootGrid.Visibility = Visibility.Visible;
+            EmptyStateTextBlock.Visibility = Visibility.Collapsed;
+            
             // Create a scope for database operations
             using (var scope = _serviceProvider.CreateScope())
             {
@@ -154,7 +153,7 @@ namespace ChatClient
                 // If chat object is provided, use its settings
                 if (chat != null)
                 {
-                    Title = $"{chat.Name ?? $"Chat {chatId}"}";
+                    ChatTitleTextBlock.Text = chat.Name ?? $"Chat {chatId}";
                     
                     // Set encryption settings from chat
                     if (!string.IsNullOrEmpty(chat.CipherAlgorithm))
@@ -175,7 +174,7 @@ namespace ChatClient
                 }
                 else
                 {
-                    Title = $"Chat {_currentChatId}";
+                    ChatTitleTextBlock.Text = $"Chat {_currentChatId}";
                     
                     // Ensure the chat exists in the local database to satisfy foreign key constraints
                     var localChat = await localDataService.GetChatAsync(chatId);
@@ -217,6 +216,30 @@ namespace ChatClient
             
             // Start automatic message refresh timer
             _messageRefreshTimer.Start();
+        }
+
+        public void CloseChat()
+        {
+            // Stop timer
+            _messageRefreshTimer?.Stop();
+            
+            // Unsubscribe from RabbitMQ
+            if (_useRabbitMQ && _rabbitMQConsumer != null && _currentChatId > 0)
+            {
+                _ = _rabbitMQConsumer.UnsubscribeFromChatAsync(_currentChatId);
+            }
+            
+            // Clear messages
+            Messages.Clear();
+            _lastDeliveryId = 0;
+            
+            // Hide chat UI
+            RootGrid.Visibility = Visibility.Collapsed;
+            EmptyStateTextBlock.Visibility = Visibility.Visible;
+            
+            // Reset state
+            _currentChatId = 0;
+            _currentUserId = 0;
         }
 
         private async Task EstablishSessionKey()
@@ -284,7 +307,7 @@ namespace ChatClient
                         senders[senderId] = user?.Login ?? "Unknown";
                     }
 
-                    Application.Current.Dispatcher.Invoke(() =>
+                    Dispatcher.Invoke(() =>
                     {
                         Messages.Clear();
                         foreach (var message in historyMessages)
@@ -311,25 +334,95 @@ namespace ChatClient
             }
             catch (Exception ex)
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                Dispatcher.Invoke(() =>
                 {
                     MessageBox.Show($"Error loading chat history: {ex.Message}");
                 });
             }
         }
 
-        private void AlgorithmSettings_Click(object sender, RoutedEventArgs e)
+        private async Task CheckForNewMessages()
         {
-            var algorithmSettingsWindow = new AlgorithmSettingsWindow(_encryptionService);
-            algorithmSettingsWindow.ShowDialog();
+            try
+            {
+                if (_currentChatId > 0 && _sessionKey != null && _sessionKey.Length > 0)
+                {
+                    var serverMessage = await _chatApiClient.ReceiveEncryptedFragment(_currentChatId, _lastDeliveryId);
+                    if (serverMessage != null && serverMessage.Content != null)
+                    {
+                        try
+                        {
+                            var encryptedBytes = Convert.FromBase64String(serverMessage.Content);
+                            var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
+                            var decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
+
+                            using (var scope = _serviceProvider.CreateScope())
+                            {
+                                var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
+                                
+                                var sender = await localDataService.GetUserByIdAsync(serverMessage.SenderId);
+                                var senderLogin = sender?.Login ?? "Unknown";
+
+                                var message = new Message 
+                                { 
+                                    ChatId = _currentChatId, 
+                                    SenderId = serverMessage.SenderId, 
+                                    Content = decryptedContent, 
+                                    IsMine = serverMessage.SenderId == _currentUserId, 
+                                    Timestamp = serverMessage.Timestamp, 
+                                    DeliveryId = serverMessage.DeliveryId 
+                                };
+                                await localDataService.AddMessageAsync(message);
+
+                                if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                                {
+                                    message.Content = $"({senderLogin}): {decryptedContent}";
+                                }
+
+                                Dispatcher.Invoke(() =>
+                                {
+                                    Messages.Add(message);
+                                    _lastDeliveryId = serverMessage.DeliveryId;
+                                    
+                                    // Auto-scroll to the new message
+                                    if (ChatHistoryListBox.Items.Count > 0)
+                                    {
+                                        ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
+                                    }
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            // Decryption failed, probably old session, ignore.
+                            Console.WriteLine($"Error decrypting message: {ex.Message}");
+                            if(serverMessage != null)
+                            {
+                                _lastDeliveryId = serverMessage.DeliveryId; // Still update delivery ID to not get stuck
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error checking for new messages: {ex.Message}");
+            }
         }
 
-        private void SelectFile_Click(object sender, RoutedEventArgs e)
+        private async Task ReceiveMessagesLoop(CancellationToken cancellationToken)
         {
-            var openFileDialog = new OpenFileDialog();
-            if (openFileDialog.ShowDialog() == true)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                MessageBox.Show($"Selected file: {openFileDialog.FileName}");
+                try
+                {
+                    await CheckForNewMessages();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error receiving messages: {ex.Message}");
+                }
+                await Task.Delay(1000, cancellationToken);
             }
         }
 
@@ -431,7 +524,7 @@ namespace ChatClient
                         MessageBox.Show("Failed to send file.");
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     MessageBox.Show("Error sending file.");
                 }
@@ -442,143 +535,15 @@ namespace ChatClient
             }
         }
 
-        private async Task CheckForNewMessages()
+        public void Cleanup()
         {
-            try
+            _cancellationTokenSource?.Cancel();
+            _messageRefreshTimer?.Stop();
+            
+            if (_rabbitMQConsumer != null)
             {
-                if (_currentChatId > 0 && _sessionKey != null && _sessionKey.Length > 0)
-                {
-                    var serverMessage = await _chatApiClient.ReceiveEncryptedFragment(_currentChatId, _lastDeliveryId);
-                    if (serverMessage != null && serverMessage.Content != null)
-                    {
-                        try
-                        {
-                            var encryptedBytes = Convert.FromBase64String(serverMessage.Content);
-                            var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
-                            var decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
-
-                            using (var scope = _serviceProvider.CreateScope())
-                            {
-                                var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
-                                
-                                var sender = await localDataService.GetUserByIdAsync(serverMessage.SenderId);
-                                var senderLogin = sender?.Login ?? "Unknown";
-
-                                var message = new Message 
-                                { 
-                                    ChatId = _currentChatId, 
-                                    SenderId = serverMessage.SenderId, 
-                                    Content = decryptedContent, 
-                                    IsMine = serverMessage.SenderId == _currentUserId, 
-                                    Timestamp = serverMessage.Timestamp, 
-                                    DeliveryId = serverMessage.DeliveryId 
-                                };
-                                await localDataService.AddMessageAsync(message);
-
-                                if (!decryptedContent.StartsWith($"({senderLogin}): "))
-                                {
-                                    message.Content = $"({senderLogin}): {decryptedContent}";
-                                }
-
-                                Application.Current.Dispatcher.Invoke(() =>
-                                {
-                                    Messages.Add(message);
-                                    _lastDeliveryId = serverMessage.DeliveryId;
-                                    
-                                    // Auto-scroll to the new message
-                                    if (ChatHistoryListBox.Items.Count > 0)
-                                    {
-                                        ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
-                                    }
-                                });
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            // Decryption failed, probably old session, ignore.
-                            // The message is not stored locally and not displayed.
-                            Console.WriteLine($"Error decrypting message: {ex.Message}");
-                            if(serverMessage != null)
-                            {
-                                _lastDeliveryId = serverMessage.DeliveryId; // Still update delivery ID to not get stuck
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error checking for new messages: {ex.Message}");
-            }
-        }
-
-        private async Task ReceiveMessagesLoop(CancellationToken cancellationToken)
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await CheckForNewMessages();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error receiving messages: {ex.Message}");
-                }
-                await Task.Delay(1000, cancellationToken);
-            }
-        }
-
-        protected override void OnClosed(EventArgs e)
-        {
-            try
-            {
-                // Stop the message refresh timer
-                _messageRefreshTimer?.Stop();
-                
-                _cancellationTokenSource.Cancel();
-                
-                // Unsubscribe from RabbitMQ (fire and forget with timeout)
-                if (_useRabbitMQ && _rabbitMQConsumer != null)
-                {
-                    try
-                    {
-                        // Use ConfigureAwait(false) to avoid deadlock and add timeout
-                        var unsubscribeTask = Task.Run(async () => 
-                        {
-                            try
-                            {
-                                await _rabbitMQConsumer.UnsubscribeFromChatAsync(_currentChatId);
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error unsubscribing from RabbitMQ: {ex.Message}");
-                            }
-                        });
-                        
-                        // Wait with timeout to prevent hanging
-                        if (!unsubscribeTask.Wait(TimeSpan.FromSeconds(2)))
-                        {
-                            Console.WriteLine("RabbitMQ unsubscribe timeout - continuing with dispose");
-                        }
-                        
-                        _rabbitMQConsumer.Dispose();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error during RabbitMQ cleanup: {ex.Message}");
-                    }
-                }
-                
-                // Dispose cancellation token source
-                _cancellationTokenSource?.Dispose();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error during window cleanup: {ex.Message}");
-            }
-            finally
-            {
-                base.OnClosed(e);
+                _rabbitMQConsumer.MessageReceived -= OnRabbitMQMessageReceived;
+                _rabbitMQConsumer.Dispose();
             }
         }
     }

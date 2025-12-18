@@ -71,8 +71,8 @@
             </TabItem>
         </TabControl>
 
-        <!-- Chat Display Area (placeholder for now) -->
-        <Border Grid.Column="1" BorderBrush="#3f3f46" BorderThickness="1" Margin="10" Background="#2d2d30">
+        <!-- Chat Display Area -->
+        <Border x:Name="ChatViewContainer" Grid.Column="1" BorderBrush="#3f3f46" BorderThickness="1" Margin="10" Background="#2d2d30">
             <TextBlock Text="Select a chat or contact to begin" 
                        VerticalAlignment="Center" 
                        HorizontalAlignment="Center" 

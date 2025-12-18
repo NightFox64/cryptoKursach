@@ -52,6 +52,7 @@ namespace ChatClient
             services.AddTransient<RegisterWindow>();
             services.AddTransient<ChatListWindow>();
             services.AddTransient<ChatWindow>();
+            services.AddTransient<ChatView>();
             services.AddTransient<AlgorithmSettingsWindow>();
         }
 

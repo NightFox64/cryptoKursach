@@ -22,6 +22,7 @@ namespace ChatClient
         private readonly IServiceProvider _serviceProvider;
         private int _currentUserId;
         private DispatcherTimer _refreshTimer;
+        private ChatView? _chatView;
 
         public ChatListWindow(IChatApiClient chatApiClient, IEncryptionService encryptionService, IServiceProvider serviceProvider)
         {
@@ -100,10 +101,20 @@ namespace ChatClient
         {
             if (ChatsListBox.SelectedItem is Chat selectedChat)
             {
-                var chatWindow = _serviceProvider.GetService<ChatWindow>();
-                chatWindow?.InitializeChat(_currentUserId, selectedChat.Id, selectedChat);
-                chatWindow?.Show();
+                OpenChatInView(selectedChat.Id, selectedChat);
             }
+        }
+
+        private void OpenChatInView(int chatId, Chat? chat = null)
+        {
+            // Create ChatView if not exists
+            if (_chatView == null)
+            {
+                _chatView = _serviceProvider.GetRequiredService<ChatView>();
+                ChatViewContainer.Child = _chatView;
+            }
+            
+            _chatView.InitializeChat(_currentUserId, chatId, chat);
         }
 
         private async void ContactsListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -152,9 +163,7 @@ namespace ChatClient
                         
                         if (chatToOpen != null)
                         {
-                            var chatWindow = _serviceProvider.GetService<ChatWindow>();
-                            chatWindow?.InitializeChat(_currentUserId, chatToOpen.Id, chatToOpen);
-                            chatWindow?.Show();
+                            OpenChatInView(chatToOpen.Id, chatToOpen);
                         }
                     }
                 }
@@ -198,6 +207,10 @@ namespace ChatClient
         {
             // Stop the refresh timer when window closes
             _refreshTimer?.Stop();
+            
+            // Cleanup ChatView
+            _chatView?.Cleanup();
+            
             base.OnClosed(e);
         }
     }
