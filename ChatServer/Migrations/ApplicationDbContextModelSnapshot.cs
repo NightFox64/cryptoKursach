@@ -43,6 +43,18 @@ namespace ChatServer.Migrations
                     b.Property<string>("PaddingMode")
                         .HasColumnType("text");
 
+                    b.Property<string>("SharedG")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("SharedIv")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("SharedP")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("SharedSymmetricKey")
+                        .HasColumnType("bytea");
+
                     b.Property<string>("UserIds")
                         .IsRequired()
                         .HasColumnType("text");

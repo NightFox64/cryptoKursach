@@ -63,7 +63,8 @@ namespace ChatClient.Services
 
         private async Task ReceiveLoop(CancellationToken cancellationToken)
         {
-            var buffer = new byte[1024 * 4];
+            var buffer = new byte[1024 * 64]; // Увеличим буфер для больших сообщений
+            var messageBuilder = new StringBuilder();
 
             try
             {
@@ -82,27 +83,40 @@ namespace ChatClient.Services
 
                     if (result.MessageType == WebSocketMessageType.Text)
                     {
-                        var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                        Log($"[WebSocket] Received: {json}");
+                        // Append the received chunk to the message builder
+                        var chunk = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                        messageBuilder.Append(chunk);
 
-                        // Skip pong messages
-                        if (json.Trim() == "pong")
+                        // Check if this is the end of the message
+                        if (result.EndOfMessage)
                         {
-                            continue;
-                        }
+                            var json = messageBuilder.ToString();
+                            messageBuilder.Clear();
 
-                        try
-                        {
-                            var messageData = JsonSerializer.Deserialize<MessageData>(json);
-                            if (messageData != null)
+                            // Skip pong messages
+                            if (json.Trim() == "pong")
                             {
-                                Log($"[WebSocket] Invoking MessageReceived event");
-                                MessageReceived?.Invoke(this, new MessageReceivedEventArgs(messageData));
+                                continue;
+                            }
+
+                            try
+                            {
+                                var messageData = JsonSerializer.Deserialize<MessageData>(json);
+                                if (messageData != null)
+                                {
+                                    Log($"[WebSocket] Received complete message (length: {json.Length})");
+                                    MessageReceived?.Invoke(this, new MessageReceivedEventArgs(messageData));
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log($"[WebSocket] Failed to deserialize message: {ex.Message}");
+                                Log($"[WebSocket] Message preview: {json.Substring(0, Math.Min(100, json.Length))}...");
                             }
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            Log($"[WebSocket] Failed to deserialize message: {ex.Message}");
+                            Log($"[WebSocket] Received fragment ({result.Count} bytes), waiting for more...");
                         }
                     }
                 }

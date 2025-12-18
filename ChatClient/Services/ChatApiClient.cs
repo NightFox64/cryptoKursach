@@ -114,7 +114,7 @@ namespace ChatClient.Services
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<(BigInteger serverPublicKey, BigInteger p, BigInteger g)?> RequestSessionKey(int chatId, int userId, BigInteger clientPublicKey)
+        public async Task<(BigInteger serverPublicKey, BigInteger p, BigInteger g, byte[]? encryptedKey, byte[]? encryptedIv)?> RequestSessionKey(int chatId, int userId, BigInteger clientPublicKey)
         {
             var sessionKeyRequest = new SessionKeyRequestDto
             {
@@ -127,11 +127,34 @@ namespace ChatClient.Services
             response.EnsureSuccessStatusCode();
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var serverKeyResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(responseContent);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var serverKeyResponse = JsonSerializer.Deserialize<Dictionary<string, string>>(responseContent, options);
 
-            if (serverKeyResponse != null && serverKeyResponse.ContainsKey("serverPublicKey") && serverKeyResponse.ContainsKey("p") && serverKeyResponse.ContainsKey("g"))
+            if (serverKeyResponse != null && 
+                serverKeyResponse.ContainsKey("serverPublicKey") && 
+                serverKeyResponse.ContainsKey("p") && 
+                serverKeyResponse.ContainsKey("g"))
             {
-                return (BigInteger.Parse(serverKeyResponse["serverPublicKey"]), BigInteger.Parse(serverKeyResponse["p"]), BigInteger.Parse(serverKeyResponse["g"]));
+                byte[]? encryptedKey = null;
+                byte[]? encryptedIv = null;
+                
+                // Get encrypted key and IV if available
+                if (serverKeyResponse.ContainsKey("encryptedKey"))
+                {
+                    encryptedKey = Convert.FromBase64String(serverKeyResponse["encryptedKey"]);
+                }
+                if (serverKeyResponse.ContainsKey("encryptedIv"))
+                {
+                    encryptedIv = Convert.FromBase64String(serverKeyResponse["encryptedIv"]);
+                }
+                
+                return (
+                    BigInteger.Parse(serverKeyResponse["serverPublicKey"]), 
+                    BigInteger.Parse(serverKeyResponse["p"]), 
+                    BigInteger.Parse(serverKeyResponse["g"]),
+                    encryptedKey,
+                    encryptedIv
+                );
             }
             return null;
         }

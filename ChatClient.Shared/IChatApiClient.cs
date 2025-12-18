@@ -18,7 +18,7 @@ namespace ChatClient.Shared
         Task<bool> CloseChat(int chatId);
         Task<bool> JoinChat(int chatId, int userId);
         Task<bool> LeaveChat(int chatId, int userId);
-        Task<(BigInteger serverPublicKey, BigInteger p, BigInteger g)?> RequestSessionKey(int chatId, int userId, BigInteger clientPublicKey);
+        Task<(BigInteger serverPublicKey, BigInteger p, BigInteger g, byte[]? encryptedKey, byte[]? encryptedIv)?> RequestSessionKey(int chatId, int userId, BigInteger clientPublicKey);
         Task<bool> SendEncryptedFragment(int chatId, int senderId, string encryptedContent);
         Task<Message?> ReceiveEncryptedFragment(int chatId, long lastDeliveryId);
         Task<List<ContactDto>> GetContacts(int userId);

@@ -415,22 +415,73 @@ namespace ChatClient
 
                 if (result.HasValue)
                 {
-                    var (serverPublicKey, p, g) = result.Value;
+                    var (serverPublicKey, p, g, encryptedChatKey, encryptedChatIv) = result.Value;
+                    
+                    FileLogger.Log($"[SessionKey] Received response from server: p={p.ToString().Substring(0, Math.Min(20, p.ToString().Length))}...");
                     
                     _clientDh = new DiffieHellman.DiffieHellman(_clientDh.PrivateKey, p, g);
                     
                     BigInteger sharedSecret = _clientDh.GetSharedSecret(serverPublicKey);
                     
                     byte[] sharedSecretBytes = sharedSecret.ToByteArray();
+                    byte[] dhKey;
+                    
                     using (SHA256 sha256 = SHA256.Create())
                     {
-                        byte[] hashedSecret = sha256.ComputeHash(sharedSecretBytes);
+                        dhKey = sha256.ComputeHash(sharedSecretBytes);
+                        FileLogger.Log($"[SessionKey] Derived DH key for decryption");
+                    }
+                    
+                    // Decrypt the chat's shared key using DH-derived key
+                    if (encryptedChatKey != null && encryptedChatIv != null)
+                    {
+                        try
+                        {
+                            using (Aes aes = Aes.Create())
+                            {
+                                aes.Key = dhKey;
+                                aes.Mode = System.Security.Cryptography.CipherMode.ECB;
+                                aes.Padding = System.Security.Cryptography.PaddingMode.PKCS7;
+                                
+                                using (var decryptor = aes.CreateDecryptor())
+                                {
+                                    _sessionKey = decryptor.TransformFinalBlock(encryptedChatKey, 0, encryptedChatKey.Length);
+                                    _iv = decryptor.TransformFinalBlock(encryptedChatIv, 0, encryptedChatIv.Length);
+                                }
+                            }
+                            
+                            FileLogger.Log($"[SessionKey] ✓ Decrypted shared chat key (key length: {_sessionKey.Length}, IV length: {_iv.Length})");
+                        }
+                        catch (Exception ex)
+                        {
+                            FileLogger.Log($"[SessionKey] ✗ Failed to decrypt shared key: {ex.Message}");
+                            
+                            // Fallback to old method
+                            int requiredKeyLength = _encryptionService.RequiredKeySize;
+                            int requiredIvLength = _encryptionService.BlockSize;
+                            
+                            _sessionKey = new byte[requiredKeyLength];
+                            Array.Copy(dhKey, 0, _sessionKey, 0, requiredKeyLength);
+                            
+                            using (SHA256 sha256_iv = SHA256.Create())
+                            {
+                                byte[] iv_seed = Encoding.UTF8.GetBytes("IV_Seed_For_DH").Concat(sharedSecretBytes).ToArray();
+                                _iv = sha256_iv.ComputeHash(iv_seed).Take(requiredIvLength).ToArray();
+                            }
+                            
+                            FileLogger.Log("[SessionKey] Using DH-derived key as fallback");
+                        }
+                    }
+                    else
+                    {
+                        FileLogger.Log("[SessionKey] No encrypted key received, using DH-derived key");
                         
+                        // Fallback to old method
                         int requiredKeyLength = _encryptionService.RequiredKeySize;
                         int requiredIvLength = _encryptionService.BlockSize;
                         
                         _sessionKey = new byte[requiredKeyLength];
-                        Array.Copy(hashedSecret, 0, _sessionKey, 0, requiredKeyLength);
+                        Array.Copy(dhKey, 0, _sessionKey, 0, requiredKeyLength);
                         
                         using (SHA256 sha256_iv = SHA256.Create())
                         {
@@ -438,16 +489,15 @@ namespace ChatClient
                             _iv = sha256_iv.ComputeHash(iv_seed).Take(requiredIvLength).ToArray();
                         }
                     }
-                    FileLogger.Log("Session key established successfully.");
                 }
                 else
                 {
-                    FileLogger.Log("Failed to establish session key: Server response empty.");
+                    FileLogger.Log("[SessionKey] ✗ Failed to establish session key: Server response empty.");
                 }
             }
             catch (Exception ex)
             {
-                FileLogger.Log($"Error establishing session key: {ex.Message}");
+                FileLogger.Log($"[SessionKey] ✗ Error establishing session key: {ex.Message}");
             }
         }
 
@@ -471,7 +521,11 @@ namespace ChatClient
 
                     Dispatcher.Invoke(() =>
                     {
+                        // Clear existing messages to prevent duplication
+                        FileLogger.Log($"[LoadChatHistory] Clearing {Messages.Count} existing messages");
                         Messages.Clear();
+                        
+                        FileLogger.Log($"[LoadChatHistory] Loading {historyMessages.Count} messages from DB");
                         foreach (var message in historyMessages)
                         {
                             var senderLogin = senders.TryGetValue(message.SenderId, out var login) ? login : "Unknown";

@@ -230,7 +230,7 @@ namespace ChatClient
 
                 if (result.HasValue)
                 {
-                    var (serverPublicKey, p, g) = result.Value;
+                    var (serverPublicKey, p, g, encryptedChatKey, encryptedChatIv) = result.Value;
                     
                     _clientDh = new DiffieHellman.DiffieHellman(_clientDh.PrivateKey, p, g);
                     

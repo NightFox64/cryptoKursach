@@ -48,8 +48,15 @@ namespace ChatServer.Controllers
 
                 if (result.HasValue)
                 {
-                    var (serverPublicKey, p, g) = result.Value;
-                    return Ok(new { serverPublicKey = serverPublicKey.ToString(), p = p.ToString(), g = g.ToString() });
+                    var (serverPublicKey, p, g, encryptedChatKey, encryptedChatIv) = result.Value;
+                    return Ok(new 
+                    { 
+                        serverPublicKey = serverPublicKey.ToString(), 
+                        p = p.ToString(), 
+                        g = g.ToString(),
+                        encryptedKey = Convert.ToBase64String(encryptedChatKey),
+                        encryptedIv = Convert.ToBase64String(encryptedChatIv)
+                    });
                 }
                 else
                 {
