@@ -23,5 +23,8 @@ namespace ChatClient.Services
 
         // New methods for Files
         Task SaveFilesAsync(IEnumerable<File> files);
+        
+        // Cleanup method
+        Task CleanupDuplicateMessagesAsync();
     }
 }

@@ -85,11 +85,22 @@ namespace ChatClient
                 if (messageData.DeliveryId <= _lastDeliveryId)
                     return;
 
-                // Skip if this is our own message (to prevent duplication when we send)
+                // CRITICAL FIX: Don't skip our own messages - we need to save them to DB with proper DeliveryId
+                // But remove the temporary message from UI first (the one with DeliveryId = 0)
                 if (messageData.SenderId == _currentUserId)
                 {
-                    _lastDeliveryId = messageData.DeliveryId;
-                    return;
+                    Console.WriteLine($"[RabbitMQ] Received own message back from server with DeliveryId={messageData.DeliveryId}");
+                    
+                    // Remove temporary message (DeliveryId = 0) from UI
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        var tempMessage = Messages.FirstOrDefault(m => m.SenderId == _currentUserId && m.DeliveryId == 0 && m.ChatId == messageData.ChatId);
+                        if (tempMessage != null)
+                        {
+                            Console.WriteLine($"[RabbitMQ] Removing temporary message from UI");
+                            Messages.Remove(tempMessage);
+                        }
+                    });
                 }
 
                 // Decrypt the content
@@ -110,21 +121,39 @@ namespace ChatClient
                         ChatId = messageData.ChatId, 
                         SenderId = messageData.SenderId, 
                         Content = decryptedContent, 
-                        IsMine = false, // It's not our message since we filtered above
+                        IsMine = messageData.SenderId == _currentUserId, // Check if it's our message
                         Timestamp = messageData.Timestamp, 
                         DeliveryId = messageData.DeliveryId 
                     };
                     
                     await localDataService.AddMessageAsync(message);
 
-                    if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                    var displayContent = decryptedContent;
+                    if (!displayContent.StartsWith($"({senderLogin}): "))
                     {
-                        message.Content = $"({senderLogin}): {decryptedContent}";
+                        displayContent = $"({senderLogin}): {decryptedContent}";
                     }
 
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        Messages.Add(message);
+                        // CRITICAL: Check if message already exists in UI (by DeliveryId)
+                        var existingMessage = Messages.FirstOrDefault(m => m.DeliveryId == messageData.DeliveryId);
+                        if (existingMessage != null)
+                        {
+                            Console.WriteLine($"[RabbitMQ] Message with DeliveryId={messageData.DeliveryId} already in UI, skipping");
+                            _lastDeliveryId = messageData.DeliveryId;
+                            return;
+                        }
+                        
+                        Messages.Add(new Message
+                        {
+                            ChatId = message.ChatId,
+                            SenderId = message.SenderId,
+                            Content = displayContent,
+                            IsMine = message.IsMine,
+                            Timestamp = message.Timestamp,
+                            DeliveryId = message.DeliveryId
+                        });
                         _lastDeliveryId = messageData.DeliveryId;
                         
                         // Auto-scroll to the new message
@@ -186,7 +215,14 @@ namespace ChatClient
                 }
             }
 
-            // Initialize RabbitMQ connection and subscribe BEFORE loading history
+            // CRITICAL FIX: Load history BEFORE connecting to RabbitMQ
+            // This ensures _lastDeliveryId is set correctly before any new messages arrive
+            _ = LoadChatHistory(); // Load history first and set _lastDeliveryId
+            _ = EstablishSessionKey(); // Then establish a new session key
+            
+            Console.WriteLine($"History loaded, _lastDeliveryId={_lastDeliveryId}. Now connecting to real-time services...");
+            
+            // Initialize RabbitMQ connection and subscribe AFTER loading history
             if (_useRabbitMQ && _rabbitMQConsumer != null)
             {
                 try
@@ -211,9 +247,6 @@ namespace ChatClient
                     Task.Run(() => ReceiveMessagesLoop(_cancellationTokenSource.Token));
                 }
             }
-
-            _ = LoadChatHistory(); // Load history first
-            _ = EstablishSessionKey(); // Then establish a new session key
             
             // Start automatic message refresh timer
             _messageRefreshTimer.Start();
@@ -274,6 +307,9 @@ namespace ChatClient
                 {
                     var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
                     
+                    // Clean up any duplicate messages before loading history
+                    await localDataService.CleanupDuplicateMessagesAsync();
+                    
                     var historyMessages = await localDataService.GetChatHistoryAsync(_currentChatId);
 
                     var senderIds = historyMessages.Select(m => m.SenderId).Distinct().ToList();
@@ -287,25 +323,36 @@ namespace ChatClient
                     Application.Current.Dispatcher.Invoke(() =>
                     {
                         Messages.Clear();
+                        
+                        // CRITICAL: Also reset _lastDeliveryId before loading to ensure consistency
+                        _lastDeliveryId = 0;
+                        
                         foreach (var message in historyMessages)
                         {
                             var senderLogin = senders.TryGetValue(message.SenderId, out var login) ? login : "Unknown";
-                            if (!message.Content.StartsWith($"({senderLogin}): "))
+                            // CRITICAL FIX: Don't modify the original message object from DB
+                            // Create content with prefix directly when creating the new Message
+                            var displayContent = message.Content;
+                            if (!displayContent.StartsWith($"({senderLogin}): "))
                             {
-                                message.Content = $"({senderLogin}): {message.Content}";
+                                displayContent = $"({senderLogin}): {displayContent}";
                             }
                             Messages.Add(new Message
                             {
                                 SenderId = message.SenderId,
-                                Content = message.Content,
+                                Content = displayContent,
                                 IsMine = message.SenderId == _currentUserId,
-                                Id = message.Id
+                                Id = message.Id,
+                                DeliveryId = message.DeliveryId
                             });
-                            if (message.Id > _lastDeliveryId)
+                            // CRITICAL FIX: Use DeliveryId (server's global ID) instead of Id (local SQLite ID)
+                            if (message.DeliveryId > _lastDeliveryId)
                             {
-                                _lastDeliveryId = message.Id;
+                                _lastDeliveryId = message.DeliveryId;
                             }
                         }
+                        
+                        Console.WriteLine($"Loaded {Messages.Count} messages, _lastDeliveryId set to {_lastDeliveryId}");
                     });
                 }
             }
@@ -352,14 +399,18 @@ namespace ChatClient
                     var currentUser = await localDataService.GetUserByIdAsync(_currentUserId);
                     var senderLogin = currentUser?.Login ?? "Me";
 
-                    var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = plainText, IsMine = true, Timestamp = DateTime.UtcNow };
-                    await localDataService.AddMessageAsync(message);
-
-                    if (!message.Content.StartsWith($"({senderLogin}): "))
-                    {
-                        message.Content = $"({senderLogin}): {plainText}";
-                    }
-                    Messages.Add(message);
+                    // CRITICAL FIX: Don't save our own messages to DB - they will come back via WebSocket/polling with proper DeliveryId
+                    // Just display the message in UI without saving to DB
+                    var displayContent = $"({senderLogin}): {plainText}";
+                    Messages.Add(new Message 
+                    { 
+                        ChatId = _currentChatId, 
+                        SenderId = _currentUserId, 
+                        Content = displayContent, 
+                        IsMine = true, 
+                        Timestamp = DateTime.UtcNow,
+                        DeliveryId = 0 // Temporary, will be replaced when message comes back from server
+                    });
                     MessageTextBox.Clear();
                     
                     // Auto-scroll to the new message
@@ -410,14 +461,18 @@ namespace ChatClient
                             var currentUser = await localDataService.GetUserByIdAsync(_currentUserId);
                             var senderLogin = currentUser?.Login ?? "Me";
 
-                            var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = messageContent, IsMine = true, Timestamp = DateTime.UtcNow };
-                            await localDataService.AddMessageAsync(message);
-
-                            if (!message.Content.StartsWith($"({senderLogin}): "))
-                            {
-                                message.Content = $"({senderLogin}): {messageContent}";
-                            }
-                            Messages.Add(message);
+                            // CRITICAL FIX: Don't save our own messages to DB - they will come back via WebSocket/polling with proper DeliveryId
+                            // Just display the message in UI without saving to DB
+                            var displayContent = $"({senderLogin}): {messageContent}";
+                            Messages.Add(new Message 
+                            { 
+                                ChatId = _currentChatId, 
+                                SenderId = _currentUserId, 
+                                Content = displayContent, 
+                                IsMine = true, 
+                                Timestamp = DateTime.UtcNow,
+                                DeliveryId = 0 // Temporary, will be replaced when message comes back from server
+                            });
                             
                             // Auto-scroll to the new message
                             if (ChatHistoryListBox.Items.Count > 0)
@@ -475,14 +530,43 @@ namespace ChatClient
                                 };
                                 await localDataService.AddMessageAsync(message);
 
-                                if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                                var displayContent = decryptedContent;
+                                if (!displayContent.StartsWith($"({senderLogin}): "))
                                 {
-                                    message.Content = $"({senderLogin}): {decryptedContent}";
+                                    displayContent = $"({senderLogin}): {decryptedContent}";
                                 }
 
                                 Application.Current.Dispatcher.Invoke(() =>
                                 {
-                                    Messages.Add(message);
+                                    // CRITICAL: Check if message already exists in UI (by DeliveryId)
+                                    var existingMessage = Messages.FirstOrDefault(m => m.DeliveryId == serverMessage.DeliveryId);
+                                    if (existingMessage != null)
+                                    {
+                                        Console.WriteLine($"[CheckForNewMessages] Message with DeliveryId={serverMessage.DeliveryId} already in UI, skipping");
+                                        _lastDeliveryId = serverMessage.DeliveryId;
+                                        return;
+                                    }
+                                    
+                                    // Remove temporary message if this is our own message coming back
+                                    if (serverMessage.SenderId == _currentUserId)
+                                    {
+                                        var tempMessage = Messages.FirstOrDefault(m => m.SenderId == _currentUserId && m.DeliveryId == 0 && m.ChatId == _currentChatId);
+                                        if (tempMessage != null)
+                                        {
+                                            Console.WriteLine($"[CheckForNewMessages] Removing temporary message from UI");
+                                            Messages.Remove(tempMessage);
+                                        }
+                                    }
+                                    
+                                    Messages.Add(new Message
+                                    {
+                                        ChatId = message.ChatId,
+                                        SenderId = message.SenderId,
+                                        Content = displayContent,
+                                        IsMine = message.IsMine,
+                                        Timestamp = message.Timestamp,
+                                        DeliveryId = message.DeliveryId
+                                    });
                                     _lastDeliveryId = serverMessage.DeliveryId;
                                     
                                     // Auto-scroll to the new message

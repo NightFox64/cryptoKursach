@@ -39,6 +39,9 @@ namespace ChatClient
         private bool _useRabbitMQ = true;
         private bool _useWebSocket = true;
         private DispatcherTimer _messageRefreshTimer;
+        
+        // CRITICAL: Semaphore to prevent concurrent message processing
+        private readonly SemaphoreSlim _messageProcessingSemaphore = new SemaphoreSlim(1, 1);
 
         public ObservableCollection<Message> Messages { get; set; }
 
@@ -76,12 +79,25 @@ namespace ChatClient
 
         private async void OnWebSocketMessageReceived(object? sender, MessageReceivedEventArgs e)
         {
+            // CRITICAL: Use semaphore to ensure only one message is processed at a time
+            await _messageProcessingSemaphore.WaitAsync();
             try
             {
                 var messageData = e.MessageData;
                 
+                // CRITICAL FIX: Capture current state at the start to avoid race conditions
+                var currentChatId = _currentChatId;
+                var currentUserId = _currentUserId;
+                
                 FileLogger.Log($"[WebSocket] ★★★ Message received: ChatId={messageData.ChatId}, SenderId={messageData.SenderId}, DeliveryId={messageData.DeliveryId}");
-                FileLogger.Log($"[WebSocket] Current chat: {_currentChatId}, Current user: {_currentUserId}");
+                FileLogger.Log($"[WebSocket] Current chat: {currentChatId}, Current user: {currentUserId}, _lastDeliveryId: {_lastDeliveryId}");
+                
+                // Skip if message is not for this chat
+                if (messageData.ChatId != currentChatId)
+                {
+                    FileLogger.Log($"[WebSocket] Skipping message for different chat: {messageData.ChatId} != {currentChatId}");
+                    return;
+                }
                 
                 // Skip if we already processed this message
                 if (messageData.DeliveryId <= _lastDeliveryId)
@@ -90,12 +106,11 @@ namespace ChatClient
                     return;
                 }
 
-                // Skip if this is our own message (to prevent duplication when we send)
-                if (messageData.SenderId == _currentUserId)
+                // Check if this is our own message
+                bool isMyMessage = messageData.SenderId == currentUserId;
+                if (isMyMessage)
                 {
-                    FileLogger.Log($"[WebSocket] Skipping own message");
-                    _lastDeliveryId = messageData.DeliveryId;
-                    return;
+                    FileLogger.Log($"[WebSocket] Received own message back from server with DeliveryId={messageData.DeliveryId}");
                 }
 
                 // Decrypt the content
@@ -126,22 +141,50 @@ namespace ChatClient
                         ChatId = messageData.ChatId, 
                         SenderId = messageData.SenderId, 
                         Content = decryptedContent, 
-                        IsMine = false, // It's not our message since we filtered above
+                        IsMine = isMyMessage, // Use captured value
                         Timestamp = messageData.Timestamp, 
                         DeliveryId = messageData.DeliveryId 
                     };
                     
-                    await localDataService.AddMessageAsync(message);
-
-                    if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                    // Try to save to DB - AddMessageAsync already checks for duplicates
+                    try
                     {
-                        message.Content = $"({senderLogin}): {decryptedContent}";
+                        await localDataService.AddMessageAsync(message);
+                        FileLogger.Log($"[WebSocket] Message saved to DB (DeliveryId={messageData.DeliveryId})");
+                    }
+                    catch (Exception dbEx)
+                    {
+                        FileLogger.Log($"[WebSocket] Failed to save message to DB: {dbEx.Message}");
+                        // Continue to display even if DB save fails
                     }
 
-                    Dispatcher.Invoke(() =>
+                    var displayContent = decryptedContent;
+                    if (!displayContent.StartsWith($"({senderLogin}): "))
                     {
+                        displayContent = $"({senderLogin}): {decryptedContent}";
+                    }
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        // CRITICAL: Check if message already exists in UI (by DeliveryId)
+                        var existingMessage = Messages.FirstOrDefault(m => m.DeliveryId == messageData.DeliveryId);
+                        if (existingMessage != null)
+                        {
+                            FileLogger.Log($"[WebSocket] Message with DeliveryId={messageData.DeliveryId} already in UI, skipping");
+                            _lastDeliveryId = messageData.DeliveryId;
+                            return;
+                        }
+                        
                         FileLogger.Log($"[WebSocket] About to add message to Messages collection (current count: {Messages.Count})");
-                        Messages.Add(message);
+                        Messages.Add(new Message
+                        {
+                            ChatId = message.ChatId,
+                            SenderId = message.SenderId,
+                            Content = displayContent,
+                            IsMine = message.IsMine,
+                            Timestamp = message.Timestamp,
+                            DeliveryId = message.DeliveryId
+                        });
                         FileLogger.Log($"[WebSocket] ✓ Message added! New count: {Messages.Count}");
                         _lastDeliveryId = messageData.DeliveryId;
                         
@@ -163,30 +206,65 @@ namespace ChatClient
             catch (Exception ex)
             {
                 FileLogger.Log($"[WebSocket] Error processing message: {ex.Message}");
+                FileLogger.Log($"[WebSocket] Stack trace: {ex.StackTrace}");
+            }
+            finally
+            {
+                // CRITICAL: Always release the semaphore
+                _messageProcessingSemaphore.Release();
             }
         }
 
         private async void OnRabbitMQMessageReceived(object? sender, MessageReceivedEventArgs e)
         {
+            // CRITICAL: Use semaphore to ensure only one message is processed at a time
+            await _messageProcessingSemaphore.WaitAsync();
             try
             {
                 var messageData = e.MessageData;
                 
+                // CRITICAL FIX: Capture current state at the start to avoid race conditions
+                var currentChatId = _currentChatId;
+                var currentUserId = _currentUserId;
+                
+                FileLogger.Log($"[RabbitMQ] Message received: ChatId={messageData.ChatId}, SenderId={messageData.SenderId}, DeliveryId={messageData.DeliveryId}");
+                FileLogger.Log($"[RabbitMQ] Current chat: {currentChatId}, Current user: {currentUserId}, _lastDeliveryId: {_lastDeliveryId}");
+                
+                // Skip if message is not for this chat
+                if (messageData.ChatId != currentChatId)
+                {
+                    FileLogger.Log($"[RabbitMQ] Skipping message for different chat: {messageData.ChatId} != {currentChatId}");
+                    return;
+                }
+                
                 // Skip if we already processed this message
                 if (messageData.DeliveryId <= _lastDeliveryId)
-                    return;
-
-                // Skip if this is our own message (to prevent duplication when we send)
-                if (messageData.SenderId == _currentUserId)
                 {
-                    _lastDeliveryId = messageData.DeliveryId;
+                    FileLogger.Log($"[RabbitMQ] Skipping duplicate message: {messageData.DeliveryId} <= {_lastDeliveryId}");
                     return;
                 }
 
+                // Check if this is our own message
+                bool isMyMessage = messageData.SenderId == currentUserId;
+                if (isMyMessage)
+                {
+                    FileLogger.Log($"[RabbitMQ] Received own message back from server with DeliveryId={messageData.DeliveryId}");
+                }
+
                 // Decrypt the content
-                var encryptedBytes = Convert.FromBase64String(messageData.Content ?? "");
-                var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
-                var decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
+                string decryptedContent;
+                try
+                {
+                    var encryptedBytes = Convert.FromBase64String(messageData.Content ?? "");
+                    var decryptedBytes = _encryptionService.Decrypt(encryptedBytes, _sessionKey, _iv);
+                    decryptedContent = Encoding.UTF8.GetString(decryptedBytes);
+                    FileLogger.Log($"[RabbitMQ] Successfully decrypted message");
+                }
+                catch (Exception decryptEx)
+                {
+                    FileLogger.Log($"[RabbitMQ] Decryption failed ({decryptEx.Message}). Message will show as [Encrypted]");
+                    decryptedContent = $"[Encrypted message - decryption failed]";
+                }
 
                 // Create a new scope for database operations to avoid threading issues
                 using (var scope = _serviceProvider.CreateScope())
@@ -201,22 +279,52 @@ namespace ChatClient
                         ChatId = messageData.ChatId, 
                         SenderId = messageData.SenderId, 
                         Content = decryptedContent, 
-                        IsMine = false, // It's not our message since we filtered above
+                        IsMine = isMyMessage, // Use captured value
                         Timestamp = messageData.Timestamp, 
                         DeliveryId = messageData.DeliveryId 
                     };
                     
-                    await localDataService.AddMessageAsync(message);
-
-                    if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                    // Try to save to DB - AddMessageAsync already checks for duplicates
+                    try
                     {
-                        message.Content = $"({senderLogin}): {decryptedContent}";
+                        await localDataService.AddMessageAsync(message);
+                        FileLogger.Log($"[RabbitMQ] Message saved to DB (DeliveryId={messageData.DeliveryId})");
+                    }
+                    catch (Exception dbEx)
+                    {
+                        FileLogger.Log($"[RabbitMQ] Failed to save message to DB: {dbEx.Message}");
+                        // Continue to display even if DB save fails
                     }
 
-                    Dispatcher.Invoke(() =>
+                    var displayContent = decryptedContent;
+                    if (!displayContent.StartsWith($"({senderLogin}): "))
                     {
-                        Messages.Add(message);
+                        displayContent = $"({senderLogin}): {decryptedContent}";
+                    }
+
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        // CRITICAL: Check if message already exists in UI (by DeliveryId)
+                        var existingMessage = Messages.FirstOrDefault(m => m.DeliveryId == messageData.DeliveryId);
+                        if (existingMessage != null)
+                        {
+                            FileLogger.Log($"[RabbitMQ] Message with DeliveryId={messageData.DeliveryId} already in UI, skipping");
+                            _lastDeliveryId = messageData.DeliveryId;
+                            return;
+                        }
+                        
+                        Messages.Add(new Message
+                        {
+                            ChatId = message.ChatId,
+                            SenderId = message.SenderId,
+                            Content = displayContent,
+                            IsMine = message.IsMine,
+                            Timestamp = message.Timestamp,
+                            DeliveryId = message.DeliveryId
+                        });
                         _lastDeliveryId = messageData.DeliveryId;
+                        
+                        FileLogger.Log($"[RabbitMQ] Added message from {senderLogin}: {decryptedContent}");
                         
                         // Auto-scroll to the new message
                         if (ChatHistoryListBox.Items.Count > 0)
@@ -228,7 +336,13 @@ namespace ChatClient
             }
             catch (Exception ex)
             {
-                FileLogger.Log($"Error processing RabbitMQ message: {ex.Message}");
+                FileLogger.Log($"[RabbitMQ] Error processing message: {ex.Message}");
+                FileLogger.Log($"[RabbitMQ] Stack trace: {ex.StackTrace}");
+            }
+            finally
+            {
+                // CRITICAL: Always release the semaphore
+                _messageProcessingSemaphore.Release();
             }
         }
 
@@ -236,25 +350,33 @@ namespace ChatClient
         {
             FileLogger.Log($"[ChatView] InitializeChat called: userId={userId}, chatId={chatId}, current={_currentChatId}");
             
-            // If reopening the same chat, just return - don't reconnect
+            // If reopening the same chat with same user, just return - don't reconnect
             if (_currentChatId == chatId && _currentUserId == userId)
             {
-                FileLogger.Log($"[ChatView] Chat {chatId} already open, skipping initialization");
+                FileLogger.Log($"[ChatView] Chat {chatId} already open for user {userId}, skipping initialization");
                 return;
             }
             
-            // If switching to a different chat, cleanup the old one first
-            if (_currentChatId > 0 && _currentChatId != chatId)
+            // Always cleanup before initializing a new chat (even if _currentChatId is 0)
+            // But only if we're actually switching chats or users
+            if (_currentChatId > 0 || _webSocketService != null)
             {
-                FileLogger.Log($"[ChatView] Switching from chat {_currentChatId} to {chatId}, cleaning up...");
+                FileLogger.Log($"[ChatView] Cleaning up before initializing chat {chatId}...");
                 
                 // Stop timer temporarily
                 _messageRefreshTimer?.Stop();
                 
-                // Disconnect WebSocket
+                // CRITICAL: Properly disconnect and dispose WebSocket before creating a new one
                 if (_webSocketService != null)
                 {
+                    FileLogger.Log($"[ChatView] Disconnecting WebSocket for chat {_currentChatId}");
+                    // Unsubscribe from events first
+                    _webSocketService.MessageReceived -= OnWebSocketMessageReceived;
+                    // Then disconnect and dispose
                     await _webSocketService.DisconnectAsync();
+                    _webSocketService.Dispose();
+                    _webSocketService = null;
+                    FileLogger.Log($"[ChatView] WebSocket disconnected and disposed");
                 }
                 
                 // Unsubscribe from RabbitMQ
@@ -263,13 +385,31 @@ namespace ChatClient
                     await _rabbitMQConsumer.UnsubscribeFromChatAsync(_currentChatId);
                 }
                 
-                // Clear messages
+                // Clear messages ALWAYS when switching chats/users to prevent showing old messages
+                FileLogger.Log($"[ChatView] Clearing messages (switching from chat {_currentChatId}/user {_currentUserId} to chat {chatId}/user {userId})");
                 Messages.Clear();
                 _lastDeliveryId = 0;
             }
             
+            // Update state BEFORE recreating services
             _currentUserId = userId;
             _currentChatId = chatId;
+            
+            // Recreate WebSocket service (always create fresh instance for new chat/user)
+            if (_useWebSocket)
+            {
+                FileLogger.Log($"[ChatView] Creating new WebSocket service for chat {chatId}");
+                _webSocketService = new WebSocketService();
+                _webSocketService.MessageReceived += OnWebSocketMessageReceived;
+            }
+            
+            // Recreate RabbitMQ consumer if needed (after Cleanup or first time)
+            if (_useRabbitMQ && _rabbitMQConsumer == null)
+            {
+                FileLogger.Log($"[ChatView] Creating new RabbitMQ consumer");
+                _rabbitMQConsumer = new RabbitMQConsumerService();
+                _rabbitMQConsumer.MessageReceived += OnRabbitMQMessageReceived;
+            }
             
             // Show the chat UI
             RootGrid.Visibility = Visibility.Visible;
@@ -315,7 +455,14 @@ namespace ChatClient
                 }
             }
 
-            // Try WebSocket first
+            // CRITICAL FIX: Load history BEFORE connecting to WebSocket/RabbitMQ
+            // This ensures _lastDeliveryId is set correctly before any new messages arrive
+            await LoadChatHistory(); // Load history first and set _lastDeliveryId
+            await EstablishSessionKey(); // Then establish a new session key
+            
+            FileLogger.Log($"[ChatView] History loaded, _lastDeliveryId={_lastDeliveryId}. Now connecting to real-time services...");
+            
+            // Try WebSocket first (AFTER loading history)
             if (_useWebSocket && _webSocketService != null)
             {
                 try
@@ -343,7 +490,7 @@ namespace ChatClient
                 FileLogger.Log($"[ChatView] WebSocket disabled (_useWebSocket={_useWebSocket}, _webSocketService={_webSocketService != null})");
             }
             
-            // Initialize RabbitMQ connection and subscribe if WebSocket failed
+            // Initialize RabbitMQ connection and subscribe if WebSocket failed (AFTER loading history)
             if (!_useWebSocket && _useRabbitMQ && _rabbitMQConsumer != null)
             {
                 try
@@ -366,9 +513,6 @@ namespace ChatClient
                     _useRabbitMQ = false;
                 }
             }
-
-            await LoadChatHistory(); // Load history first
-            await EstablishSessionKey(); // Then establish a new session key
             
             // Start automatic message refresh timer - ALWAYS start it (same as contacts/chats)
             _messageRefreshTimer.Start();
@@ -509,6 +653,9 @@ namespace ChatClient
                 {
                     var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
                     
+                    // Clean up any duplicate messages before loading history
+                    await localDataService.CleanupDuplicateMessagesAsync();
+                    
                     var historyMessages = await localDataService.GetChatHistoryAsync(_currentChatId);
 
                     var senderIds = historyMessages.Select(m => m.SenderId).Distinct().ToList();
@@ -525,26 +672,36 @@ namespace ChatClient
                         FileLogger.Log($"[LoadChatHistory] Clearing {Messages.Count} existing messages");
                         Messages.Clear();
                         
+                        // CRITICAL: Also reset _lastDeliveryId before loading to ensure consistency
+                        _lastDeliveryId = 0;
+                        
                         FileLogger.Log($"[LoadChatHistory] Loading {historyMessages.Count} messages from DB");
                         foreach (var message in historyMessages)
                         {
                             var senderLogin = senders.TryGetValue(message.SenderId, out var login) ? login : "Unknown";
-                            if (!message.Content.StartsWith($"({senderLogin}): "))
+                            // CRITICAL FIX: Don't modify the original message object from DB
+                            // Create content with prefix directly when creating the new Message
+                            var displayContent = message.Content;
+                            if (!displayContent.StartsWith($"({senderLogin}): "))
                             {
-                                message.Content = $"({senderLogin}): {message.Content}";
+                                displayContent = $"({senderLogin}): {displayContent}";
                             }
                             Messages.Add(new Message
                             {
                                 SenderId = message.SenderId,
-                                Content = message.Content,
+                                Content = displayContent,
                                 IsMine = message.SenderId == _currentUserId,
-                                Id = message.Id
+                                Id = message.Id,
+                                DeliveryId = message.DeliveryId
                             });
-                            if (message.Id > _lastDeliveryId)
+                            // CRITICAL FIX: Use DeliveryId (server's global ID) instead of Id (local SQLite ID)
+                            if (message.DeliveryId > _lastDeliveryId)
                             {
-                                _lastDeliveryId = message.Id;
+                                _lastDeliveryId = message.DeliveryId;
                             }
                         }
+                        
+                        FileLogger.Log($"[LoadChatHistory] Loaded {Messages.Count} messages, _lastDeliveryId set to {_lastDeliveryId}");
                     });
                 }
             }
@@ -560,20 +717,31 @@ namespace ChatClient
         private async Task CheckForNewMessages()
         {
             // Simple polling check - same pattern as contacts/chats refresh
+            // CRITICAL: Use semaphore to ensure only one message is processed at a time
+            await _messageProcessingSemaphore.WaitAsync();
             try
             {
-                if (_currentChatId <= 0) return;
+                // Capture current state at the start to avoid race conditions
+                var currentChatId = _currentChatId;
+                var currentUserId = _currentUserId;
+                
+                if (currentChatId <= 0) return;
                 
                 // Check if session key is established
                 if (_sessionKey == null || _sessionKey.Length == 0)
                 {
-                    FileLogger.Log("Session key not established yet, skipping message check");
                     return;
                 }
 
-                var serverMessage = await _chatApiClient.ReceiveEncryptedFragment(_currentChatId, _lastDeliveryId);
+                var serverMessage = await _chatApiClient.ReceiveEncryptedFragment(currentChatId, _lastDeliveryId);
                 if (serverMessage != null && serverMessage.Content != null)
                 {
+                    // Skip if we already processed this message
+                    if (serverMessage.DeliveryId <= _lastDeliveryId)
+                    {
+                        return;
+                    }
+                    
                     try
                     {
                         var encryptedBytes = Convert.FromBase64String(serverMessage.Content);
@@ -587,25 +755,56 @@ namespace ChatClient
                             var sender = await localDataService.GetUserByIdAsync(serverMessage.SenderId);
                             var senderLogin = sender?.Login ?? "Unknown";
 
+                            bool isMyMessage = serverMessage.SenderId == currentUserId;
+                            
                             var message = new Message 
                             { 
-                                ChatId = _currentChatId, 
+                                ChatId = currentChatId, 
                                 SenderId = serverMessage.SenderId, 
                                 Content = decryptedContent, 
-                                IsMine = serverMessage.SenderId == _currentUserId, 
+                                IsMine = isMyMessage, 
                                 Timestamp = serverMessage.Timestamp, 
                                 DeliveryId = serverMessage.DeliveryId 
                             };
-                            await localDataService.AddMessageAsync(message);
-
-                            if (!decryptedContent.StartsWith($"({senderLogin}): "))
+                            
+                            // Try to save to DB - AddMessageAsync already checks for duplicates
+                            try
                             {
-                                message.Content = $"({senderLogin}): {decryptedContent}";
+                                await localDataService.AddMessageAsync(message);
+                                FileLogger.Log($"[CheckForNewMessages] Message saved to DB (DeliveryId={serverMessage.DeliveryId})");
+                            }
+                            catch (Exception dbEx)
+                            {
+                                FileLogger.Log($"[CheckForNewMessages] Failed to save message to DB: {dbEx.Message}");
+                                // Continue to display even if DB save fails
                             }
 
-                            Dispatcher.Invoke(() =>
+                            var displayContent = decryptedContent;
+                            if (!displayContent.StartsWith($"({senderLogin}): "))
                             {
-                                Messages.Add(message);
+                                displayContent = $"({senderLogin}): {decryptedContent}";
+                            }
+
+                            await Dispatcher.InvokeAsync(() =>
+                            {
+                                // CRITICAL: Check if message already exists in UI (by DeliveryId)
+                                var existingMessage = Messages.FirstOrDefault(m => m.DeliveryId == serverMessage.DeliveryId);
+                                if (existingMessage != null)
+                                {
+                                    FileLogger.Log($"[CheckForNewMessages] Message with DeliveryId={serverMessage.DeliveryId} already in UI, skipping");
+                                    _lastDeliveryId = serverMessage.DeliveryId;
+                                    return;
+                                }
+                                
+                                Messages.Add(new Message
+                                {
+                                    ChatId = message.ChatId,
+                                    SenderId = message.SenderId,
+                                    Content = displayContent,
+                                    IsMine = message.IsMine,
+                                    Timestamp = message.Timestamp,
+                                    DeliveryId = message.DeliveryId
+                                });
                                 _lastDeliveryId = serverMessage.DeliveryId;
                                 
                                 FileLogger.Log($"[CheckForNewMessages] Added message from {senderLogin}: {decryptedContent}");
@@ -621,7 +820,7 @@ namespace ChatClient
                     catch (Exception ex)
                     {
                         // Decryption failed, probably old session, ignore.
-                        FileLogger.Log($"Error decrypting message: {ex.Message}");
+                        FileLogger.Log($"[CheckForNewMessages] Error decrypting message: {ex.Message}");
                         if(serverMessage != null)
                         {
                             _lastDeliveryId = serverMessage.DeliveryId; // Still update delivery ID to not get stuck
@@ -631,7 +830,12 @@ namespace ChatClient
             }
             catch (Exception ex)
             {
-                FileLogger.Log($"Error checking for new messages: {ex.Message}");
+                FileLogger.Log($"[CheckForNewMessages] Error: {ex.Message}");
+            }
+            finally
+            {
+                // CRITICAL: Always release the semaphore
+                _messageProcessingSemaphore.Release();
             }
         }
 
@@ -640,40 +844,28 @@ namespace ChatClient
             if (string.IsNullOrWhiteSpace(MessageTextBox.Text)) return;
 
             var plainText = MessageTextBox.Text;
+            MessageTextBox.Clear(); // Clear immediately for better UX
+            
             var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
             var encryptedBytes = _encryptionService.Encrypt(plainTextBytes, _sessionKey, _iv);
             var encryptedContent = Convert.ToBase64String(encryptedBytes);
 
+            FileLogger.Log($"[SendButton] Sending message to chat {_currentChatId}");
             var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
+            
             if (success)
             {
-                using (var scope = _serviceProvider.CreateScope())
-                {
-                    var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
-                    
-                    var currentUser = await localDataService.GetUserByIdAsync(_currentUserId);
-                    var senderLogin = currentUser?.Login ?? "Me";
-
-                    var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = plainText, IsMine = true, Timestamp = DateTime.UtcNow };
-                    await localDataService.AddMessageAsync(message);
-
-                    if (!message.Content.StartsWith($"({senderLogin}): "))
-                    {
-                        message.Content = $"({senderLogin}): {plainText}";
-                    }
-                    Messages.Add(message);
-                    MessageTextBox.Clear();
-                    
-                    // Auto-scroll to the new message
-                    if (ChatHistoryListBox.Items.Count > 0)
-                    {
-                        ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
-                    }
-                }
+                FileLogger.Log($"[SendButton] Message sent successfully, waiting for server echo via WebSocket");
+                // CRITICAL FIX: Don't add any temporary message to UI
+                // The message will appear when it comes back from server via WebSocket/RabbitMQ/polling
+                // This completely eliminates the duplicate message problem
             }
             else
             {
+                FileLogger.Log($"[SendButton] Failed to send message");
                 MessageBox.Show("Failed to send message.");
+                // Restore the text if send failed
+                MessageTextBox.Text = plainText;
             }
         }
 
@@ -712,14 +904,18 @@ namespace ChatClient
                             var currentUser = await localDataService.GetUserByIdAsync(_currentUserId);
                             var senderLogin = currentUser?.Login ?? "Me";
 
-                            var message = new Message { ChatId = _currentChatId, SenderId = _currentUserId, Content = messageContent, IsMine = true, Timestamp = DateTime.UtcNow };
-                            await localDataService.AddMessageAsync(message);
-
-                            if (!message.Content.StartsWith($"({senderLogin}): "))
-                            {
-                                message.Content = $"({senderLogin}): {messageContent}";
-                            }
-                            Messages.Add(message);
+                            // CRITICAL FIX: Don't save our own messages to DB - they will come back via WebSocket/polling with proper DeliveryId
+                            // Just display the message in UI without saving to DB
+                            var displayContent = $"({senderLogin}): {messageContent}";
+                            Messages.Add(new Message 
+                            { 
+                                ChatId = _currentChatId, 
+                                SenderId = _currentUserId, 
+                                Content = displayContent, 
+                                IsMine = true, 
+                                Timestamp = DateTime.UtcNow,
+                                DeliveryId = 0 // Temporary, will be replaced when message comes back from server
+                            });
                             
                             // Auto-scroll to the new message
                             if (ChatHistoryListBox.Items.Count > 0)
@@ -744,22 +940,62 @@ namespace ChatClient
             }
         }
 
-        public void Cleanup()
+        public async Task CleanupAsync()
         {
-            _cancellationTokenSource?.Cancel();
+            FileLogger.Log($"[ChatView] CleanupAsync called for chat {_currentChatId}");
+            
+            // Stop timers first
             _messageRefreshTimer?.Stop();
             
+            // Cancel any ongoing operations
+            _cancellationTokenSource?.Cancel();
+            
+            // Properly disconnect and cleanup WebSocket
             if (_webSocketService != null)
             {
+                FileLogger.Log($"[ChatView] Cleaning up WebSocket service...");
                 _webSocketService.MessageReceived -= OnWebSocketMessageReceived;
+                
+                // Disconnect gracefully before disposing
+                try
+                {
+                    await _webSocketService.DisconnectAsync();
+                    FileLogger.Log($"[ChatView] WebSocket disconnected successfully");
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Log($"[ChatView] Error disconnecting WebSocket: {ex.Message}");
+                }
+                
                 _webSocketService.Dispose();
+                _webSocketService = null;
+                FileLogger.Log($"[ChatView] WebSocket disposed and set to null");
             }
             
+            // Cleanup RabbitMQ
             if (_rabbitMQConsumer != null)
             {
+                FileLogger.Log($"[ChatView] Cleaning up RabbitMQ consumer...");
                 _rabbitMQConsumer.MessageReceived -= OnRabbitMQMessageReceived;
                 _rabbitMQConsumer.Dispose();
+                _rabbitMQConsumer = null;
+                FileLogger.Log($"[ChatView] RabbitMQ disposed and set to null");
             }
+            
+            // Recreate cancellation token source for next initialization
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = new CancellationTokenSource();
+            
+            // IMPORTANT: Reset state to allow re-initialization
+            FileLogger.Log($"[ChatView] Resetting state: clearing {Messages.Count} messages, resetting _currentChatId from {_currentChatId} to 0");
+            Messages.Clear();
+            _lastDeliveryId = 0;
+            _currentChatId = 0;
+            _currentUserId = 0;
+            
+            // Hide chat UI
+            RootGrid.Visibility = Visibility.Collapsed;
+            EmptyStateTextBlock.Visibility = Visibility.Visible;
         }
     }
 }

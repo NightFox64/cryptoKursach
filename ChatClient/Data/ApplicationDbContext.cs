@@ -37,6 +37,12 @@ namespace ChatClient.Data
                 .WithMany() // A Chat can have many Messages
                 .HasForeignKey(m => m.ChatId); // Foreign key is ChatId in Message
 
+            // Add unique index on (ChatId, DeliveryId) to prevent duplicate messages
+            modelBuilder.Entity<Message>()
+                .HasIndex(m => new { m.ChatId, m.DeliveryId })
+                .IsUnique()
+                .HasFilter("\"DeliveryId\" > 0"); // Only enforce uniqueness for messages with DeliveryId > 0
+
             // Configure File to Message relationship
             modelBuilder.Entity<File>()
                 .HasOne<Message>() // A File belongs to one Message

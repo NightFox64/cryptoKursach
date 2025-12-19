@@ -50,7 +50,7 @@ namespace ChatClient
             // Register your windows and viewmodels here
             services.AddTransient<LoginWindow>();
             services.AddTransient<RegisterWindow>();
-            services.AddTransient<ChatListWindow>();
+            services.AddSingleton<ChatListWindow>();
             services.AddTransient<ChatWindow>();
             services.AddTransient<ChatView>();
             services.AddTransient<AlgorithmSettingsWindow>();
@@ -70,6 +70,10 @@ namespace ChatClient
                 if (localDataService != null)
                 {
                     await localDataService.InitializeAsync();
+                    
+                    // Clean up any existing duplicate messages in the database
+                    Services.FileLogger.Log("[App] Checking for duplicate messages in local database...");
+                    await localDataService.CleanupDuplicateMessagesAsync();
                 }
 
                 var loginWindow = _serviceProvider.GetService<LoginWindow>();

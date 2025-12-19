@@ -32,11 +32,34 @@ namespace ChatClient.Services
                     return true;
                 }
 
-                // If there's an old websocket, dispose it first
+                // If there's an old websocket, properly close and dispose it first
                 if (_webSocket != null)
                 {
-                    Log($"[WebSocket] Disposing old websocket (State: {_webSocket.State})");
+                    Log($"[WebSocket] Cleaning up old websocket (State: {_webSocket.State})");
+                    
+                    // Cancel any ongoing receive operations
+                    if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
+                    {
+                        _cancellationTokenSource.Cancel();
+                    }
+                    
+                    // Try to close gracefully if still open
+                    if (_webSocket.State == WebSocketState.Open)
+                    {
+                        try
+                        {
+                            await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Reconnecting", CancellationToken.None);
+                            Log($"[WebSocket] Old connection closed gracefully");
+                        }
+                        catch (Exception ex)
+                        {
+                            Log($"[WebSocket] Error closing old connection: {ex.Message}");
+                        }
+                    }
+                    
                     _webSocket.Dispose();
+                    _cancellationTokenSource?.Dispose();
+                    Log($"[WebSocket] Old resources disposed");
                 }
 
                 _webSocket = new ClientWebSocket();
@@ -104,8 +127,9 @@ namespace ChatClient.Services
                                 var messageData = JsonSerializer.Deserialize<MessageData>(json);
                                 if (messageData != null)
                                 {
-                                    Log($"[WebSocket] Received complete message (length: {json.Length})");
+                                    Log($"[WebSocket] Received complete message (length: {json.Length}), invoking event handler");
                                     MessageReceived?.Invoke(this, new MessageReceivedEventArgs(messageData));
+                                    Log($"[WebSocket] Event handler invocation completed");
                                 }
                             }
                             catch (Exception ex)
@@ -137,15 +161,29 @@ namespace ChatClient.Services
             {
                 Log($"[WebSocket] DisconnectAsync called (State: {_webSocket?.State})");
                 
+                // Cancel ongoing operations first
+                if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
+                {
+                    _cancellationTokenSource.Cancel();
+                    Log("[WebSocket] Cancelled ongoing operations");
+                }
+                
+                // Then close the connection if it's open
                 if (_webSocket != null && _webSocket.State == WebSocketState.Open)
                 {
-                    _cancellationTokenSource?.Cancel();
-                    await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disconnecting", CancellationToken.None);
-                    Log("[WebSocket] Disconnected gracefully");
+                    try
+                    {
+                        await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disconnecting", CancellationToken.None);
+                        Log("[WebSocket] Disconnected gracefully");
+                    }
+                    catch (Exception closeEx)
+                    {
+                        Log($"[WebSocket] Error during close: {closeEx.Message}");
+                    }
                 }
                 else
                 {
-                    Log($"[WebSocket] Not disconnecting (State: {_webSocket?.State})");
+                    Log($"[WebSocket] Not closing socket (State: {_webSocket?.State})");
                 }
             }
             catch (Exception ex)
@@ -174,9 +212,32 @@ namespace ChatClient.Services
         {
             if (!_disposed)
             {
+                Log("[WebSocket] Dispose called - attempting graceful close");
+                
+                // Cancel ongoing operations first
                 _cancellationTokenSource?.Cancel();
-                _cancellationTokenSource?.Dispose();
+                
+                // Try to close gracefully if still open
+                if (_webSocket != null && _webSocket.State == WebSocketState.Open)
+                {
+                    try
+                    {
+                        // Use Wait() since Dispose can't be async
+                        _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client disposing", CancellationToken.None)
+                            .ConfigureAwait(false)
+                            .GetAwaiter()
+                            .GetResult();
+                        Log("[WebSocket] Closed gracefully in Dispose");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"[WebSocket] Error closing in Dispose: {ex.Message}");
+                    }
+                }
+                
+                // Now dispose resources
                 _webSocket?.Dispose();
+                _cancellationTokenSource?.Dispose();
                 _disposed = true;
                 Log("[WebSocket] WebSocketService disposed");
             }

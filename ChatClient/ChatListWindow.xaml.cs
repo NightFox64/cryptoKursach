@@ -203,13 +203,28 @@ namespace ChatClient
             MessageBox.Show("Please select a contact to create a chat with them.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         
-        protected override void OnClosed(EventArgs e)
+        protected override async void OnClosed(EventArgs e)
         {
+            Services.FileLogger.Log($"[ChatListWindow] OnClosed called, _chatView is {(_chatView == null ? "null" : "not null")}");
+            
             // Stop the refresh timer when window closes
             _refreshTimer?.Stop();
             
             // Cleanup ChatView
-            _chatView?.Cleanup();
+            if (_chatView != null)
+            {
+                Services.FileLogger.Log($"[ChatListWindow] Calling CleanupAsync on ChatView");
+                try
+                {
+                    await _chatView.CleanupAsync();
+                    Services.FileLogger.Log($"[ChatListWindow] CleanupAsync completed");
+                }
+                catch (Exception ex)
+                {
+                    Services.FileLogger.Log($"[ChatListWindow] Error during cleanup: {ex.Message}");
+                }
+                _chatView = null; // Clear reference to prevent double cleanup
+            }
             
             base.OnClosed(e);
         }
