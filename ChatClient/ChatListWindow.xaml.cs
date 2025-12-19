@@ -107,69 +107,33 @@ namespace ChatClient
 
         private void OpenChatInView(int chatId, Chat? chat = null)
         {
-            // Create ChatView if not exists
-            if (_chatView == null)
-            {
-                _chatView = _serviceProvider.GetRequiredService<ChatView>();
-                ChatViewContainer.Child = _chatView;
-            }
+            // Create new ChatView each time
+            _chatView = _serviceProvider.GetRequiredService<ChatView>();
+            ChatViewContainer.Child = _chatView;
             
             _chatView.InitializeChat(_currentUserId, chatId, chat);
         }
 
-        private async void ContactsListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        private void ContactsListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             if (ContactsListBox.SelectedItem is ContactDto selectedContact)
             {
                 try
                 {
-                    // Show dialog to select existing chat or create new one
-                    var selectChatWindow = new SelectOrCreateChatWindow(
-                        _chatApiClient, 
-                        _currentUserId, 
-                        selectedContact.ContactId, 
-                        selectedContact.ContactUserName);
-                    
-                    if (selectChatWindow.ShowDialog() == true)
+                    // Show chat selection view in the right panel
+                    var chatSelectionView = _serviceProvider.GetRequiredService<ChatSelectionView>();
+                    chatSelectionView.ChatSelected += async (s, chat) =>
                     {
-                        Chat? chatToOpen = null;
-                        
-                        if (selectChatWindow.CreateNew)
-                        {
-                            // Show create chat dialog
-                            var createChatWindow = new CreateChatWindow();
-                            if (createChatWindow.ShowDialog() == true)
-                            {
-                                chatToOpen = await _chatApiClient.CreateChat(
-                                    createChatWindow.ChatName,
-                                    _currentUserId,
-                                    selectedContact.ContactId,
-                                    createChatWindow.CipherAlgorithm,
-                                    createChatWindow.CipherMode,
-                                    createChatWindow.PaddingMode
-                                );
-                                
-                                if (chatToOpen != null)
-                                {
-                                    MessageBox.Show($"Chat '{createChatWindow.ChatName}' created successfully!");
-                                    await RefreshChats();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            chatToOpen = selectChatWindow.SelectedChat;
-                        }
-                        
-                        if (chatToOpen != null)
-                        {
-                            OpenChatInView(chatToOpen.Id, chatToOpen);
-                        }
-                    }
+                        OpenChatInView(chat.Id, chat);
+                        await RefreshChats(); // Refresh the chat list after creating/selecting
+                    };
+                    
+                    ChatViewContainer.Child = chatSelectionView;
+                    chatSelectionView.Initialize(_currentUserId, selectedContact.ContactId, selectedContact.ContactUserName);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error opening chat with contact: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Error opening chat selection: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 finally
                 {

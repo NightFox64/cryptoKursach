@@ -1,0 +1,193 @@
+<UserControl x:Class="ChatClient.ChatSelectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:ChatClient.Converters"
+             Background="#2d2d30">
+    <UserControl.Resources>
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#007acc"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="3" 
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#005a9e"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,10,0,5"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#3e3e42"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#3f3f46"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="Height" Value="30"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#3e3e42"/>
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="BorderBrush" Value="#3f3f46"/>
+            <Setter Property="Height" Value="30"/>
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="Black"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- View for selecting existing chat or creating new -->
+        <Grid x:Name="SelectionPanel" Visibility="Visible">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="20,20,20,10">
+                <TextBlock x:Name="ContactNameText"
+                           FontSize="24" 
+                           FontWeight="Bold" 
+                           Foreground="White"
+                           TextAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Chat List -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,0">
+                <StackPanel>
+                    <TextBlock Text="Existing Chats:" 
+                               FontSize="16" 
+                               Foreground="White" 
+                               Margin="0,0,0,10"/>
+                    
+                    <ListBox x:Name="ChatsListBox"
+                             Background="#3e3e42"
+                             BorderThickness="1"
+                             BorderBrush="#3f3f46"
+                             Foreground="White"
+                             MinHeight="200"
+                             SelectionChanged="ChatsListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#4e4e52" 
+                                        Padding="10" 
+                                        Margin="5"
+                                        CornerRadius="5"
+                                        BorderThickness="1"
+                                        BorderBrush="#555">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" 
+                                                   FontWeight="Bold" 
+                                                   FontSize="14"
+                                                   Foreground="White"/>
+                                        <TextBlock FontSize="12" Foreground="#aaa" Margin="0,5,0,0">
+                                            <Run Text="Algorithm: "/>
+                                            <Run Text="{Binding CipherAlgorithm}" FontWeight="SemiBold"/>
+                                            <Run Text=" | Mode: "/>
+                                            <Run Text="{Binding CipherMode}" FontWeight="SemiBold"/>
+                                            <Run Text=" | Padding: "/>
+                                            <Run Text="{Binding PaddingMode}" FontWeight="SemiBold"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="2" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Center"
+                        Margin="20">
+                <Button Content="Open Selected Chat" 
+                        Click="OpenChat_Click"
+                        Width="150"
+                        IsEnabled="{Binding ElementName=ChatsListBox, Path=SelectedItem, Converter={StaticResource NullToBoolConverter}}"/>
+                <Button Content="Create New Chat" 
+                        Click="ShowCreatePanel_Click"
+                        Width="150"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- View for creating new chat -->
+        <Grid x:Name="CreatePanel" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <TextBlock Grid.Row="0" 
+                       Text="Create New Chat"
+                       FontSize="24" 
+                       FontWeight="Bold" 
+                       Foreground="White"
+                       Margin="20"
+                       TextAlignment="Center"/>
+
+            <!-- Form -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="20,0">
+                    <Label Content="Chat Name:"/>
+                    <TextBox x:Name="ChatNameTextBox" Text="New Chat"/>
+
+                    <Label Content="Cipher Algorithm:"/>
+                    <ComboBox x:Name="AlgorithmComboBox" SelectedIndex="0">
+                        <ComboBoxItem Content="RC6" Foreground="Black"/>
+                        <ComboBoxItem Content="LOKI97" Foreground="Black"/>
+                    </ComboBox>
+
+                    <Label Content="Cipher Mode:"/>
+                    <ComboBox x:Name="ModeComboBox" SelectedIndex="1">
+                        <ComboBoxItem Content="ECB" Foreground="Black"/>
+                        <ComboBoxItem Content="CBC" Foreground="Black"/>
+                        <ComboBoxItem Content="PCBC" Foreground="Black"/>
+                        <ComboBoxItem Content="CFB" Foreground="Black"/>
+                        <ComboBoxItem Content="OFB" Foreground="Black"/>
+                        <ComboBoxItem Content="CTR" Foreground="Black"/>
+                        <ComboBoxItem Content="RandomDelta" Foreground="Black"/>
+                    </ComboBox>
+
+                    <Label Content="Padding Mode:"/>
+                    <ComboBox x:Name="PaddingComboBox" SelectedIndex="0">
+                        <ComboBoxItem Content="PKCS7" Foreground="Black"/>
+                        <ComboBoxItem Content="Zeros" Foreground="Black"/>
+                        <ComboBoxItem Content="None" Foreground="Black"/>
+                    </ComboBox>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Buttons -->
+            <StackPanel Grid.Row="2" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Center"
+                        Margin="20">
+                <Button Content="Create Chat" Click="CreateChat_Click" Width="120"/>
+                <Button Content="Back" Click="ShowSelectionPanel_Click" Width="100" Background="#555"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

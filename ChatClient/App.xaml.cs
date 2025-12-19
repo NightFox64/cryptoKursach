@@ -53,6 +53,7 @@ namespace ChatClient
             services.AddTransient<ChatListWindow>(); // Changed from Singleton to Transient to allow reopening after logout
             services.AddTransient<ChatWindow>();
             services.AddTransient<ChatView>();
+            services.AddTransient<ChatSelectionView>();
             services.AddTransient<AlgorithmSettingsWindow>();
         }
 
