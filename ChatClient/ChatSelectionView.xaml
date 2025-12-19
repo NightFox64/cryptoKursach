@@ -175,6 +175,8 @@
                     <ComboBox x:Name="PaddingComboBox" SelectedIndex="0">
                         <ComboBoxItem Content="PKCS7" Foreground="Black"/>
                         <ComboBoxItem Content="Zeros" Foreground="Black"/>
+                        <ComboBoxItem Content="ANSIX923" Foreground="Black"/>
+                        <ComboBoxItem Content="ISO10126" Foreground="Black"/>
                         <ComboBoxItem Content="None" Foreground="Black"/>
                     </ComboBox>
                 </StackPanel>

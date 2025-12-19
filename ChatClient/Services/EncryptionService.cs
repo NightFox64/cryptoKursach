@@ -99,6 +99,8 @@ namespace ChatClient.Services
             {
                 "PKCS7" => PaddingMode.PKCS7,
                 "Zeros" => PaddingMode.Zeros,
+                "ANSIX923" => PaddingMode.ANSIX923,
+                "ISO10126" => PaddingMode.ISO10126,
                 "None" => PaddingMode.None,
                 _ => PaddingMode.PKCS7
             };
@@ -201,6 +203,10 @@ namespace ChatClient.Services
                     return new PKCS7Padding();
                 case PaddingMode.Zeros:
                     return new ZerosPadding();
+                case PaddingMode.ANSIX923:
+                    return new ANSIX923Padding();
+                case PaddingMode.ISO10126:
+                    return new ISO10126Padding();
                 case PaddingMode.None:
                     return null; // No padding
                 default:

@@ -13,7 +13,7 @@ namespace ChatServer.Models
         // Encryption settings for this chat
         public string? CipherAlgorithm { get; set; } // LOKI97, RC6, Aes
         public string? CipherMode { get; set; } // ECB, CBC, PCBC, CFB, OFB, CTR, RandomDelta
-        public string? PaddingMode { get; set; } // PKCS7, Zeros, None
+        public string? PaddingMode { get; set; } // PKCS7, Zeros, ANSIX923, ISO10126, None
         
         // Shared encryption key for all chat participants
         public byte[]? SharedSymmetricKey { get; set; } // Common symmetric key for the chat
