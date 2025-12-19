@@ -71,12 +71,6 @@ namespace ChatClient.Services
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<bool> RemoveContact(int userId, int contactId)
-        {
-            var response = await _httpClient.PostAsync($"/Contacts/remove?userId={userId}&contactId={contactId}", null);
-            return response.IsSuccessStatusCode;
-        }
-
         public async Task<Chat?> CreateChat(string name, int initialUserId, int otherUserId, string? cipherAlgorithm, string? cipherMode, string? paddingMode)
         {
             var createChatDto = new ChatClient.Shared.DTO.CreateChatDto
@@ -237,6 +231,31 @@ namespace ChatClient.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error deleting chat: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> RemoveContact(int userId, int contactId)
+        {
+            try
+            {
+                Console.WriteLine($"[ChatApiClient] Removing contact: userId={userId}, contactId={contactId}");
+                var response = await _httpClient.PostAsync($"/Contacts/remove?userId={userId}&contactId={contactId}", null);
+                
+                Console.WriteLine($"[ChatApiClient] Response status: {response.StatusCode}");
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[ChatApiClient] Error response: {errorContent}");
+                }
+                
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ChatApiClient] Exception removing contact: {ex.Message}");
+                Console.WriteLine($"[ChatApiClient] Stack trace: {ex.StackTrace}");
                 return false;
             }
         }

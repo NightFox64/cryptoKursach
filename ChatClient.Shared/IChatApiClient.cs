@@ -13,7 +13,6 @@ namespace ChatClient.Shared
         Task<bool> SendContactRequest(int userId, string contactLogin);
         Task<bool> AcceptContactRequest(int userId, int contactId);
         Task<bool> DeclineContactRequest(int userId, int contactId);
-        Task<bool> RemoveContact(int userId, int contactId);
         Task<Chat?> CreateChat(string name, int initialUserId, int otherUserId, string? cipherAlgorithm, string? cipherMode, string? paddingMode);
         Task<bool> CloseChat(int chatId);
         Task<bool> JoinChat(int chatId, int userId);
@@ -27,5 +26,6 @@ namespace ChatClient.Shared
         Task<List<Message>> GetChatHistory(int chatId); // Added for fetching chat history
         void ClearAuthToken(); // Clear authentication token on logout
         Task<bool> DeleteChat(int chatId); // Delete/close a chat
+        Task<bool> RemoveContact(int userId, int contactId); // Remove contact and all shared chats
     }
 }

@@ -30,7 +30,7 @@ namespace ChatClient
             _chatApiClient = chatApiClient;
             _encryptionService = encryptionService;
             _serviceProvider = serviceProvider;
-            ContactsListBox.DisplayMemberPath = "ContactUserName";
+            // ContactsListBox now uses ItemTemplate, so DisplayMemberPath is removed
             ChatsListBox.DisplayMemberPath = "Name";
             
             // Setup auto-refresh timer (every 3 seconds)
@@ -231,6 +231,65 @@ namespace ChatClient
                 {
                     Services.FileLogger.Log($"[ChatListWindow] Error during logout: {ex.Message}");
                     MessageBox.Show($"Error during logout: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private async void DeleteContactButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button button && button.Tag is ContactDto contact)
+            {
+                var result = MessageBox.Show(
+                    $"Are you sure you want to remove '{contact.ContactUserName}' from your contacts?\n\n" +
+                    "⚠️ WARNING: This will also delete ALL shared chats with this contact for both users!",
+                    "Remove Contact",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning
+                );
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        Services.FileLogger.Log($"[ChatListWindow] Removing contact {contact.ContactId} ({contact.ContactUserName})");
+                        
+                        // Call the API to remove the contact (and all shared chats)
+                        bool success = await _chatApiClient.RemoveContact(_currentUserId, contact.ContactId);
+                        
+                        if (success)
+                        {
+                            Services.FileLogger.Log($"[ChatListWindow] Contact {contact.ContactUserName} removed successfully");
+                            MessageBox.Show($"Contact '{contact.ContactUserName}' removed successfully.\nAll shared chats have been deleted.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                            
+                            // Refresh both contacts and chats lists
+                            await RefreshContacts();
+                            await RefreshChats();
+                            
+                            // Clear the chat view if it was showing a chat with this contact
+                            if (_chatView != null)
+                            {
+                                await _chatView.CleanupAsync();
+                                ChatViewContainer.Child = new System.Windows.Controls.TextBlock
+                                {
+                                    Text = "Select a chat or contact to begin",
+                                    VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                                    HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                                    Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170)),
+                                    FontSize = 16
+                                };
+                            }
+                        }
+                        else
+                        {
+                            Services.FileLogger.Log($"[ChatListWindow] Failed to remove contact {contact.ContactUserName}");
+                            MessageBox.Show("Failed to remove contact. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Services.FileLogger.Log($"[ChatListWindow] Error removing contact: {ex.Message}");
+                        MessageBox.Show($"Error removing contact: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
                 }
             }
         }

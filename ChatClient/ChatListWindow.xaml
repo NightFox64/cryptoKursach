@@ -92,7 +92,45 @@
             <TabItem Header="Contacts">
                 <StackPanel>
                     <Button Content="Add Contact" Margin="5" Click="AddContactButton_Click"/>
-                    <ListBox x:Name="ContactsListBox" Height="350" Margin="5" SelectionChanged="ContactsListBox_SelectionChanged"/>
+                    <ListBox x:Name="ContactsListBox" Height="350" Margin="5" SelectionChanged="ContactsListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <TextBlock Grid.Column="0" 
+                                               Text="{Binding ContactUserName}" 
+                                               VerticalAlignment="Center"
+                                               Foreground="White"
+                                               Margin="5,0,0,0"/>
+                                    
+                                    <Button Grid.Column="1" 
+                                            Content="🗑️" 
+                                            Width="30" 
+                                            Height="25"
+                                            Padding="2"
+                                            Margin="5,0,0,0"
+                                            Click="DeleteContactButton_Click"
+                                            Tag="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                <Setter Property="Background" Value="#d13438"/>
+                                                <Setter Property="FontSize" Value="12"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#a02d31"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Chats">

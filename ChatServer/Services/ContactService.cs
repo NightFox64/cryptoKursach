@@ -73,28 +73,62 @@ namespace ChatServer.Services
 
         public async Task RemoveContact(int userId, int contactId)
         {
+            Console.WriteLine($"[ContactService] RemoveContact called: userId={userId}, contactId={contactId}");
+            
             var user = await _userService.GetById(userId);
             var contactUser = await _userService.GetById(contactId);
 
             if (user == null || contactUser == null)
             {
+                Console.WriteLine($"[ContactService] User not found: user={user != null}, contactUser={contactUser != null}");
                 throw new Exception("User not found");
             }
 
+            Console.WriteLine($"[ContactService] Found users: user={user.Login}, contactUser={contactUser.Login}");
+
             var userContact = user.Contacts.FirstOrDefault(c => c.ContactId == contactId);
             var contactUserContact = contactUser.Contacts.FirstOrDefault(c => c.ContactId == userId);
+
+            Console.WriteLine($"[ContactService] Contacts found: userContact={userContact != null}, contactUserContact={contactUserContact != null}");
 
             if (userContact != null)
             {
                 user.Contacts.Remove(userContact);
                 await _userService.Update(user); // Save changes to user's contacts
+                Console.WriteLine($"[ContactService] Removed contact from user {user.Login}");
             }
 
             if (contactUserContact != null)
             {
                 contactUser.Contacts.Remove(contactUserContact);
                 await _userService.Update(contactUser); // Save changes to contactUser's contacts
+                Console.WriteLine($"[ContactService] Removed contact from contactUser {contactUser.Login}");
             }
+
+            // CRITICAL: Delete all chats between these two users
+            Console.WriteLine($"[ContactService] Looking for chats to delete between userId={userId} and contactId={contactId}");
+            
+            // Load all chats and filter in memory because UserIds is a List<int> stored as JSON
+            var allChats = await _context.Chats.ToListAsync();
+            var chatsToDelete = allChats
+                .Where(c => c.UserIds.Contains(userId) && c.UserIds.Contains(contactId))
+                .ToList();
+
+            Console.WriteLine($"[ContactService] Found {chatsToDelete.Count} chats to delete");
+            
+            if (chatsToDelete.Any())
+            {
+                foreach (var chat in chatsToDelete)
+                {
+                    Console.WriteLine($"[ContactService] Deleting chat: Id={chat.Id}, Name={chat.Name}");
+                }
+                
+                _context.Chats.RemoveRange(chatsToDelete);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[ContactService] Successfully deleted {chatsToDelete.Count} chats");
+            }
+            
+            Console.WriteLine($"[ContactService] RemoveContact completed successfully");
         }
 
         public async Task SendContactRequest(int userId, string contactLogin)
