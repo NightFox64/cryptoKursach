@@ -175,6 +175,21 @@ namespace ChatClient
                             return;
                         }
                         
+                        // CRITICAL FIX: Remove any temporary messages (DeliveryId = 0) for this sender before adding the real message
+                        // This prevents duplicates when attaching files/images
+                        if (isMyMessage)
+                        {
+                            var tempMessages = Messages.Where(m => m.DeliveryId == 0 && m.SenderId == messageData.SenderId).ToList();
+                            if (tempMessages.Any())
+                            {
+                                FileLogger.Log($"[WebSocket] Removing {tempMessages.Count} temporary messages before adding real message");
+                                foreach (var tempMsg in tempMessages)
+                                {
+                                    Messages.Remove(tempMsg);
+                                }
+                            }
+                        }
+                        
                         FileLogger.Log($"[WebSocket] About to add message to Messages collection (current count: {Messages.Count})");
                         Messages.Add(new Message
                         {
@@ -311,6 +326,21 @@ namespace ChatClient
                             FileLogger.Log($"[RabbitMQ] Message with DeliveryId={messageData.DeliveryId} already in UI, skipping");
                             _lastDeliveryId = messageData.DeliveryId;
                             return;
+                        }
+                        
+                        // CRITICAL FIX: Remove any temporary messages (DeliveryId = 0) for this sender before adding the real message
+                        // This prevents duplicates when attaching files/images
+                        if (isMyMessage)
+                        {
+                            var tempMessages = Messages.Where(m => m.DeliveryId == 0 && m.SenderId == messageData.SenderId).ToList();
+                            if (tempMessages.Any())
+                            {
+                                FileLogger.Log($"[RabbitMQ] Removing {tempMessages.Count} temporary messages before adding real message");
+                                foreach (var tempMsg in tempMessages)
+                                {
+                                    Messages.Remove(tempMsg);
+                                }
+                            }
                         }
                         
                         Messages.Add(new Message
@@ -796,6 +826,21 @@ namespace ChatClient
                                     return;
                                 }
                                 
+                                // CRITICAL FIX: Remove any temporary messages (DeliveryId = 0) for this sender before adding the real message
+                                // This prevents duplicates when attaching files/images
+                                if (isMyMessage)
+                                {
+                                    var tempMessages = Messages.Where(m => m.DeliveryId == 0 && m.SenderId == serverMessage.SenderId).ToList();
+                                    if (tempMessages.Any())
+                                    {
+                                        FileLogger.Log($"[CheckForNewMessages] Removing {tempMessages.Count} temporary messages before adding real message");
+                                        foreach (var tempMsg in tempMessages)
+                                        {
+                                            Messages.Remove(tempMsg);
+                                        }
+                                    }
+                                }
+                                
                                 Messages.Add(new Message
                                 {
                                     ChatId = message.ChatId,
@@ -897,32 +942,10 @@ namespace ChatClient
                     var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
                     if (success)
                     {
-                        using (var scope = _serviceProvider.CreateScope())
-                        {
-                            var localDataService = scope.ServiceProvider.GetRequiredService<ILocalDataService>();
-                            
-                            var currentUser = await localDataService.GetUserByIdAsync(_currentUserId);
-                            var senderLogin = currentUser?.Login ?? "Me";
-
-                            // CRITICAL FIX: Don't save our own messages to DB - they will come back via WebSocket/polling with proper DeliveryId
-                            // Just display the message in UI without saving to DB
-                            var displayContent = $"({senderLogin}): {messageContent}";
-                            Messages.Add(new Message 
-                            { 
-                                ChatId = _currentChatId, 
-                                SenderId = _currentUserId, 
-                                Content = displayContent, 
-                                IsMine = true, 
-                                Timestamp = DateTime.UtcNow,
-                                DeliveryId = 0 // Temporary, will be replaced when message comes back from server
-                            });
-                            
-                            // Auto-scroll to the new message
-                            if (ChatHistoryListBox.Items.Count > 0)
-                            {
-                                ChatHistoryListBox.ScrollIntoView(ChatHistoryListBox.Items[ChatHistoryListBox.Items.Count - 1]);
-                            }
-                        }
+                        FileLogger.Log($"[AttachFile] File sent successfully, waiting for server echo via WebSocket");
+                        // CRITICAL FIX: Don't add any temporary message to UI for images/files
+                        // The message will appear when it comes back from server via WebSocket/RabbitMQ/polling
+                        // This completely eliminates the duplicate message problem (same as text messages)
                     }
                     else
                     {
