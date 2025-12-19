@@ -109,9 +109,31 @@ namespace ChatClient
         {
             // Create new ChatView each time
             _chatView = _serviceProvider.GetRequiredService<ChatView>();
+            
+            // Subscribe to ChatDeleted event
+            _chatView.ChatDeleted += OnChatDeleted;
+            
             ChatViewContainer.Child = _chatView;
             
             _chatView.InitializeChat(_currentUserId, chatId, chat);
+        }
+
+        private async void OnChatDeleted(object? sender, int deletedChatId)
+        {
+            Services.FileLogger.Log($"[ChatListWindow] Chat {deletedChatId} was deleted, refreshing chat list");
+            
+            // Refresh the chats list
+            await RefreshChats();
+            
+            // Show empty state in chat view container
+            ChatViewContainer.Child = new System.Windows.Controls.TextBlock
+            {
+                Text = "Chat deleted. Select another chat or contact to begin",
+                VerticalAlignment = System.Windows.VerticalAlignment.Center,
+                HorizontalAlignment = System.Windows.HorizontalAlignment.Center,
+                Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(170, 170, 170)),
+                FontSize = 16
+            };
         }
 
         private void ContactsListBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

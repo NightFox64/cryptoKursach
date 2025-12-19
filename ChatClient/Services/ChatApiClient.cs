@@ -226,5 +226,19 @@ namespace ChatClient.Services
         {
             _httpClient.DefaultRequestHeaders.Authorization = null;
         }
+
+        public async Task<bool> DeleteChat(int chatId)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsync($"/Chats/close?chatId={chatId}", null);
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting chat: {ex.Message}");
+                return false;
+            }
+        }
     }
 }

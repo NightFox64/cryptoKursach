@@ -1020,5 +1020,51 @@ namespace ChatClient
             RootGrid.Visibility = Visibility.Collapsed;
             EmptyStateTextBlock.Visibility = Visibility.Visible;
         }
+
+        private async void DeleteChatButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show(
+                $"Are you sure you want to delete this chat? This action cannot be undone.\n\nChat: {ChatTitleTextBlock.Text}",
+                "Delete Chat",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning
+            );
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    FileLogger.Log($"[DeleteChat] Deleting chat {_currentChatId}");
+                    
+                    // Call the API to delete the chat on the server
+                    bool success = await _chatApiClient.DeleteChat(_currentChatId);
+                    
+                    if (success)
+                    {
+                        FileLogger.Log($"[DeleteChat] Chat {_currentChatId} deleted successfully");
+                        MessageBox.Show("Chat deleted successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                        
+                        // Cleanup and close the chat view
+                        await CleanupAsync();
+                        
+                        // Notify parent window to refresh chat list
+                        ChatDeleted?.Invoke(this, _currentChatId);
+                    }
+                    else
+                    {
+                        FileLogger.Log($"[DeleteChat] Failed to delete chat {_currentChatId}");
+                        MessageBox.Show("Failed to delete chat. Please try again.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Log($"[DeleteChat] Error deleting chat: {ex.Message}");
+                    MessageBox.Show($"Error deleting chat: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+        
+        // Event to notify parent window that chat was deleted
+        public event EventHandler<int>? ChatDeleted;
     }
 }
