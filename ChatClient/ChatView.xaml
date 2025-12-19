@@ -38,7 +38,10 @@
                                    Margin="0,0,5,0"
                                    FontWeight="SemiBold"
                                    Foreground="#007acc"/>
-                        <Image Source="{Binding Content, Converter={StaticResource ImageConverter}}" MaxHeight="100"/>
+                        <StackPanel>
+                            <Image Source="{Binding Content, Converter={StaticResource ImageConverter}}" MaxHeight="100"/>
+                            <Button Content="Download Image" Click="DownloadImage_Click" Tag="{Binding Content}" Margin="0,2,0,0" Padding="5,3" FontSize="10"/>
+                        </StackPanel>
                     </StackPanel>
                 </DataTemplate>
             </converters:MessageTypeToTemplateConverter.ImageMessageTemplate>
@@ -52,7 +55,7 @@
                                    Foreground="#007acc"/>
                         <StackPanel>
                             <TextBlock Text="📎 File" FontWeight="SemiBold" Foreground="White"/>
-                            <Button Content="Download" CommandParameter="{Binding Content}" Margin="0,2,0,0"/>
+                            <Button Content="Download" Click="DownloadFile_Click" Tag="{Binding Content}" Margin="0,2,0,0"/>
                         </StackPanel>
                     </StackPanel>
                 </DataTemplate>

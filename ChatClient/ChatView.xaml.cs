@@ -175,20 +175,8 @@ namespace ChatClient
                             return;
                         }
                         
-                        // CRITICAL FIX: Remove any temporary messages (DeliveryId = 0) for this sender before adding the real message
-                        // This prevents duplicates when attaching files/images
-                        if (isMyMessage)
-                        {
-                            var tempMessages = Messages.Where(m => m.DeliveryId == 0 && m.SenderId == messageData.SenderId).ToList();
-                            if (tempMessages.Any())
-                            {
-                                FileLogger.Log($"[WebSocket] Removing {tempMessages.Count} temporary messages before adding real message");
-                                foreach (var tempMsg in tempMessages)
-                                {
-                                    Messages.Remove(tempMsg);
-                                }
-                            }
-                        }
+                        // NOTE: We no longer create temporary messages, so no need to remove them
+                        // All messages come from server with proper DeliveryId
                         
                         FileLogger.Log($"[WebSocket] About to add message to Messages collection (current count: {Messages.Count})");
                         Messages.Add(new Message
@@ -328,20 +316,8 @@ namespace ChatClient
                             return;
                         }
                         
-                        // CRITICAL FIX: Remove any temporary messages (DeliveryId = 0) for this sender before adding the real message
-                        // This prevents duplicates when attaching files/images
-                        if (isMyMessage)
-                        {
-                            var tempMessages = Messages.Where(m => m.DeliveryId == 0 && m.SenderId == messageData.SenderId).ToList();
-                            if (tempMessages.Any())
-                            {
-                                FileLogger.Log($"[RabbitMQ] Removing {tempMessages.Count} temporary messages before adding real message");
-                                foreach (var tempMsg in tempMessages)
-                                {
-                                    Messages.Remove(tempMsg);
-                                }
-                            }
-                        }
+                        // NOTE: We no longer create temporary messages, so no need to remove them
+                        // All messages come from server with proper DeliveryId
                         
                         Messages.Add(new Message
                         {
@@ -826,20 +802,8 @@ namespace ChatClient
                                     return;
                                 }
                                 
-                                // CRITICAL FIX: Remove any temporary messages (DeliveryId = 0) for this sender before adding the real message
-                                // This prevents duplicates when attaching files/images
-                                if (isMyMessage)
-                                {
-                                    var tempMessages = Messages.Where(m => m.DeliveryId == 0 && m.SenderId == serverMessage.SenderId).ToList();
-                                    if (tempMessages.Any())
-                                    {
-                                        FileLogger.Log($"[CheckForNewMessages] Removing {tempMessages.Count} temporary messages before adding real message");
-                                        foreach (var tempMsg in tempMessages)
-                                        {
-                                            Messages.Remove(tempMsg);
-                                        }
-                                    }
-                                }
+                                // NOTE: We no longer create temporary messages, so no need to remove them
+                                // All messages come from server with proper DeliveryId
                                 
                                 Messages.Add(new Message
                                 {
@@ -921,24 +885,40 @@ namespace ChatClient
             {
                 try
                 {
+                    FileLogger.Log($"[AttachFile] Starting file attachment: {openFileDialog.FileName}");
                     TransferProgressBar.Visibility = Visibility.Visible;
+                    
+                    // Check if session key is established
+                    if (_sessionKey == null || _sessionKey.Length == 0)
+                    {
+                        FileLogger.Log($"[AttachFile] ERROR: Session key not established");
+                        MessageBox.Show("Session key not established. Please try reopening the chat.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                    
                     byte[] fileBytes = System.IO.File.ReadAllBytes(openFileDialog.FileName);
+                    FileLogger.Log($"[AttachFile] File read successfully, size: {fileBytes.Length} bytes");
 
                     string fileName = Path.GetFileName(openFileDialog.FileName);
                     string messageContent;
                     if (fileName.EndsWith(".jpg") || fileName.EndsWith(".png") || fileName.EndsWith(".gif"))
                     {
                         messageContent = "[IMAGE]" + Convert.ToBase64String(fileBytes);
+                        FileLogger.Log($"[AttachFile] Prepared IMAGE message");
                     }
                     else
                     {
                         messageContent = "[FILE]" + fileName + "|" + Convert.ToBase64String(fileBytes);
+                        FileLogger.Log($"[AttachFile] Prepared FILE message: {fileName}");
                     }
 
+                    FileLogger.Log($"[AttachFile] Encrypting message content...");
                     var messageContentBytes = Encoding.UTF8.GetBytes(messageContent);
                     var encryptedBytes = _encryptionService.Encrypt(messageContentBytes, _sessionKey, _iv);
                     var encryptedContent = Convert.ToBase64String(encryptedBytes);
+                    FileLogger.Log($"[AttachFile] Encryption successful, encrypted size: {encryptedContent.Length} chars");
                     
+                    FileLogger.Log($"[AttachFile] Sending to server...");
                     var success = await _chatApiClient.SendEncryptedFragment(_currentChatId, _currentUserId, encryptedContent);
                     if (success)
                     {
@@ -949,12 +929,15 @@ namespace ChatClient
                     }
                     else
                     {
-                        MessageBox.Show("Failed to send file.");
+                        FileLogger.Log($"[AttachFile] Failed to send file - server returned false");
+                        MessageBox.Show("Failed to send file.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    MessageBox.Show("Error sending file.");
+                    FileLogger.Log($"[AttachFile] ERROR: {ex.Message}");
+                    FileLogger.Log($"[AttachFile] Stack trace: {ex.StackTrace}");
+                    MessageBox.Show($"Error sending file:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
                 finally
                 {
@@ -1060,6 +1043,138 @@ namespace ChatClient
                 {
                     FileLogger.Log($"[DeleteChat] Error deleting chat: {ex.Message}");
                     MessageBox.Show($"Error deleting chat: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void DownloadFile_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button button && button.Tag is string content)
+            {
+                try
+                {
+                    FileLogger.Log($"[DownloadFile] Download button clicked");
+                    
+                    // Extract the file content from the message
+                    // Format: "(username): [FILE]filename|base64data"
+                    string fileContent = content;
+                    
+                    // Remove sender prefix if present
+                    if (fileContent.StartsWith("("))
+                    {
+                        int prefixEnd = fileContent.IndexOf("): ");
+                        if (prefixEnd != -1)
+                        {
+                            fileContent = fileContent.Substring(prefixEnd + 3);
+                        }
+                    }
+                    
+                    // Check if it's a file message
+                    if (!fileContent.StartsWith("[FILE]"))
+                    {
+                        MessageBox.Show("Invalid file format.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                    
+                    // Remove [FILE] prefix
+                    fileContent = fileContent.Substring("[FILE]".Length);
+                    
+                    // Split filename and base64 data
+                    string[] parts = fileContent.Split('|');
+                    if (parts.Length != 2)
+                    {
+                        MessageBox.Show("Invalid file format.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                    
+                    string fileName = parts[0];
+                    string base64Data = parts[1];
+                    
+                    FileLogger.Log($"[DownloadFile] Downloading file: {fileName}");
+                    
+                    // Convert base64 to bytes
+                    byte[] fileBytes = Convert.FromBase64String(base64Data);
+                    
+                    // Open save file dialog
+                    var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+                    {
+                        FileName = fileName,
+                        Filter = "All files (*.*)|*.*"
+                    };
+                    
+                    if (saveFileDialog.ShowDialog() == true)
+                    {
+                        // Save file
+                        System.IO.File.WriteAllBytes(saveFileDialog.FileName, fileBytes);
+                        FileLogger.Log($"[DownloadFile] File saved to: {saveFileDialog.FileName}");
+                        MessageBox.Show($"File downloaded successfully to:\n{saveFileDialog.FileName}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Log($"[DownloadFile] Error downloading file: {ex.Message}");
+                    MessageBox.Show($"Error downloading file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void DownloadImage_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Button button && button.Tag is string content)
+            {
+                try
+                {
+                    FileLogger.Log($"[DownloadImage] Download image button clicked");
+                    
+                    // Extract the image content from the message
+                    // Format: "(username): [IMAGE]base64data"
+                    string imageContent = content;
+                    
+                    // Remove sender prefix if present
+                    if (imageContent.StartsWith("("))
+                    {
+                        int prefixEnd = imageContent.IndexOf("): ");
+                        if (prefixEnd != -1)
+                        {
+                            imageContent = imageContent.Substring(prefixEnd + 3);
+                        }
+                    }
+                    
+                    // Check if it's an image message
+                    if (!imageContent.StartsWith("[IMAGE]"))
+                    {
+                        MessageBox.Show("Invalid image format.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        return;
+                    }
+                    
+                    // Remove [IMAGE] prefix
+                    string base64Data = imageContent.Substring("[IMAGE]".Length).Trim();
+                    
+                    FileLogger.Log($"[DownloadImage] Downloading image");
+                    
+                    // Convert base64 to bytes
+                    byte[] imageBytes = Convert.FromBase64String(base64Data);
+                    
+                    // Open save file dialog
+                    var saveFileDialog = new Microsoft.Win32.SaveFileDialog
+                    {
+                        FileName = "image.png",
+                        Filter = "PNG files (*.png)|*.png|JPEG files (*.jpg)|*.jpg|All files (*.*)|*.*",
+                        DefaultExt = ".png"
+                    };
+                    
+                    if (saveFileDialog.ShowDialog() == true)
+                    {
+                        // Save image
+                        System.IO.File.WriteAllBytes(saveFileDialog.FileName, imageBytes);
+                        FileLogger.Log($"[DownloadImage] Image saved to: {saveFileDialog.FileName}");
+                        MessageBox.Show($"Image downloaded successfully to:\n{saveFileDialog.FileName}", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    FileLogger.Log($"[DownloadImage] Error downloading image: {ex.Message}");
+                    MessageBox.Show($"Error downloading image: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
