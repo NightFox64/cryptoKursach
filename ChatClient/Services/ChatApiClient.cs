@@ -221,5 +221,10 @@ namespace ChatClient.Services
             var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
             return JsonSerializer.Deserialize<List<Message>>(responseContent, options) ?? new List<Message>();
         }
+
+        public void ClearAuthToken()
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+        }
     }
 }

@@ -1,28 +1,39 @@
-=== Chat Server Log Started at 2025-12-19 04:13:22 ===
-[04:13:22.890] Log file initialized at: C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\chat_server_logs.txt
-[04:13:22.894] === Chat Server Starting ===
-[04:14:04.569] [SessionKey] Using existing shared key for chat 7
-[04:14:04.597] [SessionKey] Updated session for user 1 in chat 7
-[04:14:04.683] [WebSocket] New connection: UserId=1, ChatId=7
-[04:14:09.470] [SessionKey] Using existing shared key for chat 7
-[04:14:09.472] [SessionKey] Updated session for user 2 in chat 7
-[04:14:09.523] [WebSocket] New connection: UserId=2, ChatId=7
-[04:14:15.433] [WebSocket] Broadcasting to chat 7: {"Id":293,"ChatId":7,"SenderId":1,"Content":"k1r350QIbDUoR19ss2AcBQ==","DeliveryId":293,"Timestamp":"2025-12-19T01:14:15.3573065Z"}
-[04:14:15.435] [WebSocket] Broadcast complete for chat 7
-[04:14:21.300] [WebSocket] Broadcasting to chat 7: {"Id":294,"ChatId":7,"SenderId":1,"Content":"vv\u002B6a5ypX5MCpaFLwUH1NA==","DeliveryId":294,"Timestamp":"2025-12-19T01:14:21.2859305Z"}
-[04:14:21.301] [WebSocket] Broadcast complete for chat 7
-[04:14:24.744] [WebSocket] Broadcasting to chat 7: {"Id":295,"ChatId":7,"SenderId":2,"Content":"oV2Asz60mqLEwLyyW4GJfQ==","DeliveryId":295,"Timestamp":"2025-12-19T01:14:24.7402453Z"}
-[04:14:24.745] [WebSocket] Broadcast complete for chat 7
-[04:14:28.403] [WebSocket] Broadcasting to chat 7: {"Id":296,"ChatId":7,"SenderId":2,"Content":"sv0syhF8Y8UUT/7b9Ehizg==","DeliveryId":296,"Timestamp":"2025-12-19T01:14:28.3985535Z"}
-[04:14:28.404] [WebSocket] Broadcast complete for chat 7
-[04:14:36.667] [WebSocket] Broadcasting to chat 7: {"Id":297,"ChatId":7,"SenderId":2,"Content":"LTjnT\u002B7FwZCxgpz1bdtYKjX4OrpHdDTtNzQjxxM3AQE=","DeliveryId":297,"Timestamp":"2025-12-19T01:14:36.6529794Z"}
-[04:14:36.667] [WebSocket] Broadcast complete for chat 7
-[04:14:38.660] [WebSocket] WebSocket error: The remote party closed the WebSocket connection without completing the close handshake.
-[04:14:38.661] [WebSocket] Removing connection: UserId=2, ChatId=7
-[04:14:54.903] [SessionKey] Using existing shared key for chat 7
-[04:14:54.912] [SessionKey] Updated session for user 2 in chat 7
-[04:14:54.951] [WebSocket] New connection: UserId=2, ChatId=7
-[04:15:07.325] [WebSocket] WebSocket error: The remote party closed the WebSocket connection without completing the close handshake.
-[04:15:07.326] [WebSocket] Removing connection: UserId=2, ChatId=7
-[04:15:10.180] [WebSocket] WebSocket error: The remote party closed the WebSocket connection without completing the close handshake.
-[04:15:10.181] [WebSocket] Removing connection: UserId=1, ChatId=7
+=== Chat Server Log Started at 2025-12-19 06:51:03 ===
+[06:51:03.902] Log file initialized at: C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\chat_server_logs.txt
+[06:51:03.904] === Chat Server Starting ===
+[06:51:40.753] [SessionKey] Using existing shared key for chat 26
+[06:51:40.779] [SessionKey] Updated session for user 1 in chat 26
+[06:51:40.850] [WebSocket] New connection: UserId=1, ChatId=26
+[06:51:46.404] [SessionKey] Using existing shared key for chat 26
+[06:51:46.406] [SessionKey] Updated session for user 2 in chat 26
+[06:51:46.431] [WebSocket] New connection: UserId=2, ChatId=26
+[06:51:50.646] [WebSocket] Broadcasting to chat 26: {"Id":303,"ChatId":26,"SenderId":1,"Content":"DD20Rz0QfSA8b3vD0Q2USw==","DeliveryId":303,"Timestamp":"2025-12-19T03:51:50.5847526Z"}
+[06:51:50.648] [WebSocket] Broadcast complete for chat 26
+[06:51:54.576] [WebSocket] Broadcasting to chat 26: {"Id":304,"ChatId":26,"SenderId":2,"Content":"qOX3n2ZUN2kequGTu3WN5w==","DeliveryId":304,"Timestamp":"2025-12-19T03:51:54.5613407Z"}
+[06:51:54.577] [WebSocket] Broadcast complete for chat 26
+[06:52:02.604] [WebSocket] Broadcasting to chat 26: {"Id":305,"ChatId":26,"SenderId":1,"Content":"scs8Y7FKJ3qY2yz5XtEwZA==","DeliveryId":305,"Timestamp":"2025-12-19T03:52:02.5907121Z"}
+[06:52:02.604] [WebSocket] Broadcast complete for chat 26
+[06:52:09.609] [WebSocket] Broadcasting to chat 26: {"Id":306,"ChatId":26,"SenderId":2,"Content":"KPrfRfmykD934QNMdgIaHw==","DeliveryId":306,"Timestamp":"2025-12-19T03:52:09.5955438Z"}
+[06:52:09.609] [WebSocket] Broadcast complete for chat 26
+[06:52:13.212] [WebSocket] Broadcasting to chat 26: {"Id":307,"ChatId":26,"SenderId":1,"Content":"B1bYf8Rytr29LjFt9IkjSw==","DeliveryId":307,"Timestamp":"2025-12-19T03:52:13.1990904Z"}
+[06:52:13.213] [WebSocket] Broadcast complete for chat 26
+[06:52:18.560] [WebSocket] Broadcasting to chat 26: {"Id":308,"ChatId":26,"SenderId":1,"Content":"zjEjBrIsYumfRsuIzQqKpQ==","DeliveryId":308,"Timestamp":"2025-12-19T03:52:18.5560018Z"}
+[06:52:18.561] [WebSocket] Broadcast complete for chat 26
+[06:52:22.268] [WebSocket] Broadcasting to chat 26: {"Id":309,"ChatId":26,"SenderId":2,"Content":"0nTZ/LXpKL\u002BLcX25YmV7gg==","DeliveryId":309,"Timestamp":"2025-12-19T03:52:22.2550011Z"}
+[06:52:22.268] [WebSocket] Broadcast complete for chat 26
+[06:52:25.744] [WebSocket] WebSocket error: The remote party closed the WebSocket connection without completing the close handshake.
+[06:52:25.744] [WebSocket] Removing connection: UserId=2, ChatId=26
+[06:52:31.314] [WebSocket] Broadcasting to chat 26: {"Id":310,"ChatId":26,"SenderId":1,"Content":"w07KWGPoNDeG9ozs1QeP1Q==","DeliveryId":310,"Timestamp":"2025-12-19T03:52:31.3003716Z"}
+[06:52:31.315] [WebSocket] Broadcast complete for chat 26
+[06:52:41.613] [SessionKey] Using existing shared key for chat 26
+[06:52:41.621] [SessionKey] Updated session for user 2 in chat 26
+[06:52:41.628] [WebSocket] New connection: UserId=2, ChatId=26
+[06:52:54.248] [WebSocket] WebSocket error: The remote party closed the WebSocket connection without completing the close handshake.
+[06:52:54.249] [WebSocket] Removing connection: UserId=2, ChatId=26
+[06:52:54.612] [SessionKey] Using existing shared key for chat 23
+[06:52:54.613] [SessionKey] Updated session for user 2 in chat 23
+[06:52:54.628] [WebSocket] New connection: UserId=2, ChatId=23
+[06:53:00.535] [WebSocket] WebSocket error: The remote party closed the WebSocket connection without completing the close handshake.
+[06:53:00.536] [WebSocket] Removing connection: UserId=2, ChatId=23
+[06:53:01.609] [WebSocket] WebSocket error: The remote party closed the WebSocket connection without completing the close handshake.
+[06:53:01.610] [WebSocket] Removing connection: UserId=1, ChatId=26

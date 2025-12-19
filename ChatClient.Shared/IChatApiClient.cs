@@ -25,5 +25,6 @@ namespace ChatClient.Shared
         Task<List<Chat>> GetChats(int userId);
         Task<int?> GetOrCreateChat(int userId1, int userId2);
         Task<List<Message>> GetChatHistory(int chatId); // Added for fetching chat history
+        void ClearAuthToken(); // Clear authentication token on logout
     }
 }

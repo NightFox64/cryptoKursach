@@ -202,6 +202,52 @@ namespace ChatClient
         {
             MessageBox.Show("Please select a contact to create a chat with them.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+
+        private async void LogoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show("Are you sure you want to logout?", "Logout", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    Services.FileLogger.Log("[ChatListWindow] Logout button clicked");
+                    
+                    // Stop the refresh timer
+                    _refreshTimer?.Stop();
+                    Services.FileLogger.Log("[ChatListWindow] Refresh timer stopped");
+                    
+                    // Cleanup ChatView
+                    if (_chatView != null)
+                    {
+                        Services.FileLogger.Log("[ChatListWindow] Cleaning up ChatView");
+                        await _chatView.CleanupAsync();
+                        _chatView = null;
+                    }
+                    
+                    // Clear authentication token
+                    _chatApiClient.ClearAuthToken();
+                    Services.FileLogger.Log("[ChatListWindow] Auth token cleared");
+                    
+                    // Open login window
+                    var loginWindow = _serviceProvider.GetService<LoginWindow>();
+                    if (loginWindow != null)
+                    {
+                        loginWindow.Show();
+                        Services.FileLogger.Log("[ChatListWindow] Login window opened");
+                    }
+                    
+                    // Close this window
+                    Close();
+                    Services.FileLogger.Log("[ChatListWindow] ChatListWindow closed");
+                }
+                catch (Exception ex)
+                {
+                    Services.FileLogger.Log($"[ChatListWindow] Error during logout: {ex.Message}");
+                    MessageBox.Show($"Error during logout: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
         
         protected override async void OnClosed(EventArgs e)
         {

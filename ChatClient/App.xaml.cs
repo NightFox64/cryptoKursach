@@ -50,7 +50,7 @@ namespace ChatClient
             // Register your windows and viewmodels here
             services.AddTransient<LoginWindow>();
             services.AddTransient<RegisterWindow>();
-            services.AddSingleton<ChatListWindow>();
+            services.AddTransient<ChatListWindow>(); // Changed from Singleton to Transient to allow reopening after logout
             services.AddTransient<ChatWindow>();
             services.AddTransient<ChatView>();
             services.AddTransient<AlgorithmSettingsWindow>();

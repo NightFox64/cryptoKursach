@@ -1,66 +1,317 @@
-=== Chat Client Log Started at 2025-12-19 04:14:44 ===
-[04:14:44.651] Log file initialized at: C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\chat_client_logs.txt
-[04:14:44.652] === Application Starting ===
-[04:14:45.402] [App] Checking for duplicate messages in local database...
-[04:14:45.405] [LocalDataService] Starting duplicate message cleanup...
-[04:14:45.607] [LocalDataService] Found 103 messages with DeliveryId > 0
-[04:14:45.609] [LocalDataService] ✓ No duplicate messages found - database is clean
-[04:14:54.332] [ChatView] InitializeChat called: userId=2, chatId=7, current=0
-[04:14:54.333] [ChatView] Cleaning up before initializing chat 7...
-[04:14:54.333] [ChatView] Disconnecting WebSocket for chat 0
-[04:14:54.335] [WebSocket] DisconnectAsync called (State: )
-[04:14:54.335] [WebSocket] Not closing socket (State: )
-[04:14:54.336] [WebSocket] Dispose called - attempting graceful close
-[04:14:54.336] [WebSocket] WebSocketService disposed
-[04:14:54.336] [ChatView] WebSocket disconnected and disposed
-[04:14:54.336] [ChatView] Clearing messages (switching from chat 0/user 0 to chat 7/user 2)
-[04:14:54.336] [ChatView] Creating new WebSocket service for chat 7
-[04:14:54.389] [LocalDataService] Starting duplicate message cleanup...
-[04:14:54.425] [LocalDataService] Found 103 messages with DeliveryId > 0
-[04:14:54.425] [LocalDataService] ✓ No duplicate messages found - database is clean
-[04:14:54.474] [LoadChatHistory] Clearing 0 existing messages
-[04:14:54.474] [LoadChatHistory] Loading 12 messages from DB
-[04:14:54.476] [LoadChatHistory] Loaded 12 messages, _lastDeliveryId set to 297
-[04:14:54.940] [SessionKey] Received response from server: p=87171344777766298536...
-[04:14:54.943] [SessionKey] Derived DH key for decryption
-[04:14:54.945] [SessionKey] ✗ Failed to decrypt shared key: Padding is invalid and cannot be removed.
-[04:14:54.946] [SessionKey] Using DH-derived key as fallback
-[04:14:54.946] [ChatView] History loaded, _lastDeliveryId=297. Now connecting to real-time services...
-[04:14:54.947] [ChatView] Attempting WebSocket connection for chat 7...
-[04:14:54.948] [WebSocket] Connecting to ws://localhost:5280/ws/chat/7?userId=2
-[04:14:54.954] [WebSocket] Connected successfully (State: Open)
-[04:14:54.959] [ChatView] ✓ Connected to WebSocket for chat 7
-[04:15:07.320] [ChatListWindow] OnClosed called, _chatView is not null
-[04:15:07.321] [ChatListWindow] Calling CleanupAsync on ChatView
-[04:15:07.322] [ChatView] CleanupAsync called for chat 7
-[04:15:07.323] [ChatView] Cleaning up WebSocket service...
-[04:15:07.323] [WebSocket] DisconnectAsync called (State: Open)
-[04:15:07.324] [WebSocket] Cancelled ongoing operations
-[04:15:07.325] [WebSocket] Not closing socket (State: Aborted)
-[04:15:07.326] [ChatView] WebSocket disconnected successfully
-[04:15:07.326] [WebSocket] Dispose called - attempting graceful close
-[04:15:07.326] [WebSocket] WebSocketService disposed
-[04:15:07.327] [ChatView] WebSocket disposed and set to null
-[04:15:07.327] [ChatView] Cleaning up RabbitMQ consumer...
-[04:15:07.328] [RabbitMQ] RabbitMQConsumerService disposed
-[04:15:07.329] [ChatView] RabbitMQ disposed and set to null
-[04:15:07.329] [ChatView] Resetting state: clearing 12 messages, resetting _currentChatId from 7 to 0
-[04:15:07.330] [ChatListWindow] CleanupAsync completed
-[04:15:07.334] [WebSocket] Receive loop cancelled
-[04:15:10.177] [ChatListWindow] OnClosed called, _chatView is not null
-[04:15:10.178] [ChatListWindow] Calling CleanupAsync on ChatView
-[04:15:10.179] [ChatView] CleanupAsync called for chat 7
-[04:15:10.179] [ChatView] Cleaning up WebSocket service...
-[04:15:10.180] [WebSocket] DisconnectAsync called (State: Open)
-[04:15:10.180] [WebSocket] Cancelled ongoing operations
-[04:15:10.181] [WebSocket] Not closing socket (State: Aborted)
-[04:15:10.181] [ChatView] WebSocket disconnected successfully
-[04:15:10.181] [WebSocket] Dispose called - attempting graceful close
-[04:15:10.182] [WebSocket] WebSocketService disposed
-[04:15:10.182] [ChatView] WebSocket disposed and set to null
-[04:15:10.182] [ChatView] Cleaning up RabbitMQ consumer...
-[04:15:10.183] [RabbitMQ] RabbitMQConsumerService disposed
-[04:15:10.183] [ChatView] RabbitMQ disposed and set to null
-[04:15:10.184] [ChatView] Resetting state: clearing 12 messages, resetting _currentChatId from 7 to 0
-[04:15:10.184] [ChatListWindow] CleanupAsync completed
-[04:15:10.187] [WebSocket] Receive loop cancelled
+=== Chat Client Log Started at 2025-12-19 06:51:16 ===
+[06:51:16.256] Log file initialized at: C:\Users\max_d\OneDrive\Desktop\KURSACH\cryptoKursach\chat_client_logs.txt
+[06:51:16.257] === Application Starting ===
+[06:51:16.851] [App] Checking for duplicate messages in local database...
+[06:51:16.854] [LocalDataService] Starting duplicate message cleanup...
+[06:51:17.033] [LocalDataService] Found 108 messages with DeliveryId > 0
+[06:51:17.034] [LocalDataService] ✓ No duplicate messages found - database is clean
+[06:51:40.462] [ChatView] InitializeChat called: userId=1, chatId=26, current=0
+[06:51:40.462] [ChatView] Cleaning up before initializing chat 26...
+[06:51:40.463] [ChatView] Disconnecting WebSocket for chat 0
+[06:51:40.465] [WebSocket] DisconnectAsync called (State: )
+[06:51:40.466] [WebSocket] Not closing socket (State: )
+[06:51:40.466] [WebSocket] Dispose called - attempting graceful close
+[06:51:40.466] [WebSocket] WebSocketService disposed
+[06:51:40.467] [ChatView] WebSocket disconnected and disposed
+[06:51:40.467] [ChatView] Clearing messages (switching from chat 0/user 0 to chat 26/user 1)
+[06:51:40.467] [ChatView] Creating new WebSocket service for chat 26
+[06:51:40.522] [LocalDataService] Starting duplicate message cleanup...
+[06:51:40.541] [LocalDataService] Found 108 messages with DeliveryId > 0
+[06:51:40.541] [LocalDataService] ✓ No duplicate messages found - database is clean
+[06:51:40.589] [LoadChatHistory] Clearing 0 existing messages
+[06:51:40.589] [LoadChatHistory] Loading 5 messages from DB
+[06:51:40.592] [LoadChatHistory] Loaded 5 messages, _lastDeliveryId set to 0
+[06:51:40.834] [SessionKey] Received response from server: p=69801839953891396079...
+[06:51:40.837] [SessionKey] Derived DH key for decryption
+[06:51:40.838] [SessionKey] ✗ Failed to decrypt shared key: Padding is invalid and cannot be removed.
+[06:51:40.839] [SessionKey] Using DH-derived key as fallback
+[06:51:40.840] [ChatView] History loaded, _lastDeliveryId=0. Now connecting to real-time services...
+[06:51:40.840] [ChatView] Attempting WebSocket connection for chat 26...
+[06:51:40.841] [WebSocket] Connecting to ws://localhost:5280/ws/chat/26?userId=1
+[06:51:40.852] [WebSocket] Connected successfully (State: Open)
+[06:51:40.856] [ChatView] ✓ Connected to WebSocket for chat 26
+[06:51:45.906] [ChatView] InitializeChat called: userId=2, chatId=26, current=0
+[06:51:45.906] [ChatView] Cleaning up before initializing chat 26...
+[06:51:45.907] [ChatView] Disconnecting WebSocket for chat 0
+[06:51:45.909] [WebSocket] DisconnectAsync called (State: )
+[06:51:45.909] [WebSocket] Not closing socket (State: )
+[06:51:45.910] [WebSocket] Dispose called - attempting graceful close
+[06:51:45.910] [WebSocket] WebSocketService disposed
+[06:51:45.910] [ChatView] WebSocket disconnected and disposed
+[06:51:45.910] [ChatView] Clearing messages (switching from chat 0/user 0 to chat 26/user 2)
+[06:51:45.910] [ChatView] Creating new WebSocket service for chat 26
+[06:51:45.967] [LocalDataService] Starting duplicate message cleanup...
+[06:51:45.994] [LocalDataService] Found 108 messages with DeliveryId > 0
+[06:51:45.995] [LocalDataService] ✓ No duplicate messages found - database is clean
+[06:51:46.042] [LoadChatHistory] Clearing 0 existing messages
+[06:51:46.042] [LoadChatHistory] Loading 5 messages from DB
+[06:51:46.045] [LoadChatHistory] Loaded 5 messages, _lastDeliveryId set to 0
+[06:51:46.420] [SessionKey] Received response from server: p=69801839953891396079...
+[06:51:46.423] [SessionKey] Derived DH key for decryption
+[06:51:46.425] [SessionKey] ✗ Failed to decrypt shared key: Padding is invalid and cannot be removed.
+[06:51:46.426] [SessionKey] Using DH-derived key as fallback
+[06:51:46.426] [ChatView] History loaded, _lastDeliveryId=0. Now connecting to real-time services...
+[06:51:46.426] [ChatView] Attempting WebSocket connection for chat 26...
+[06:51:46.428] [WebSocket] Connecting to ws://localhost:5280/ws/chat/26?userId=2
+[06:51:46.433] [WebSocket] Connected successfully (State: Open)
+[06:51:46.437] [ChatView] ✓ Connected to WebSocket for chat 26
+[06:51:50.570] [SendButton] Sending message to chat 26
+[06:51:50.649] [SendButton] Message sent successfully, waiting for server echo via WebSocket
+[06:51:50.651] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:51:50.651] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:51:50.653] [WebSocket] ★★★ Message received: ChatId=26, SenderId=1, DeliveryId=303
+[06:51:50.653] [WebSocket] Current chat: 26, Current user: 1, _lastDeliveryId: 0
+[06:51:50.653] [WebSocket] Received own message back from server with DeliveryId=303
+[06:51:50.654] [WebSocket] ★★★ Message received: ChatId=26, SenderId=1, DeliveryId=303
+[06:51:50.654] [WebSocket] Current chat: 26, Current user: 2, _lastDeliveryId: 0
+[06:51:50.654] [WebSocket] Successfully decrypted message
+[06:51:50.655] [WebSocket] Event handler invocation completed
+[06:51:50.660] [WebSocket] Successfully decrypted message
+[06:51:50.661] [WebSocket] Event handler invocation completed
+[06:51:50.733] [WebSocket] Failed to save message to DB: An error occurred while saving the entity changes. See the inner exception for details.
+[06:51:50.733] [WebSocket] Message saved to DB (DeliveryId=303)
+[06:51:50.734] [WebSocket] About to add message to Messages collection (current count: 5)
+[06:51:50.734] [WebSocket] ✓ Message added! New count: 6
+[06:51:50.734] [WebSocket] Message from 1: yo
+[06:51:50.735] [WebSocket] About to add message to Messages collection (current count: 5)
+[06:51:50.735] [WebSocket] ✓ Message added! New count: 6
+[06:51:50.735] [WebSocket] Message from 1: yo
+[06:51:50.735] [WebSocket] Scrolling to last item (ListBox count: 6)
+[06:51:54.558] [SendButton] Sending message to chat 26
+[06:51:54.577] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:51:54.577] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:51:54.578] [WebSocket] Current chat: 26, Current user: 2, _lastDeliveryId: 303
+[06:51:54.578] [WebSocket] ★★★ Message received: ChatId=26, SenderId=2, DeliveryId=304
+[06:51:54.578] [WebSocket] Current chat: 26, Current user: 1, _lastDeliveryId: 303
+[06:51:54.579] [WebSocket] Successfully decrypted message
+[06:51:54.579] [WebSocket] Event handler invocation completed
+[06:51:54.580] [SendButton] Message sent successfully, waiting for server echo via WebSocket
+[06:51:54.580] [WebSocket] Event handler invocation completed
+[06:51:54.594] [WebSocket] Failed to save message to DB: An error occurred while saving the entity changes. See the inner exception for details.
+[06:51:54.595] [WebSocket] About to add message to Messages collection (current count: 6)
+[06:51:54.595] [WebSocket] ✓ Message added! New count: 7
+[06:51:54.595] [WebSocket] Message from 2: hi
+[06:51:54.596] [WebSocket] Scrolling to last item (ListBox count: 7)
+[06:51:54.599] [WebSocket] Message saved to DB (DeliveryId=304)
+[06:51:54.599] [WebSocket] About to add message to Messages collection (current count: 6)
+[06:51:54.600] [WebSocket] ✓ Message added! New count: 7
+[06:51:54.600] [WebSocket] Message from 2: hi
+[06:51:54.600] [WebSocket] Scrolling to last item (ListBox count: 7)
+[06:52:02.589] [SendButton] Sending message to chat 26
+[06:52:02.604] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:52:02.604] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:52:02.605] [WebSocket] ★★★ Message received: ChatId=26, SenderId=1, DeliveryId=305
+[06:52:02.605] [WebSocket] ★★★ Message received: ChatId=26, SenderId=1, DeliveryId=305
+[06:52:02.605] [WebSocket] Current chat: 26, Current user: 2, _lastDeliveryId: 304
+[06:52:02.606] [WebSocket] Received own message back from server with DeliveryId=305
+[06:52:02.606] [WebSocket] Successfully decrypted message
+[06:52:02.606] [WebSocket] Successfully decrypted message
+[06:52:02.607] [WebSocket] Event handler invocation completed
+[06:52:02.607] [SendButton] Message sent successfully, waiting for server echo via WebSocket
+[06:52:02.607] [WebSocket] Event handler invocation completed
+[06:52:02.609] [WebSocket] Message saved to DB (DeliveryId=305)
+[06:52:02.610] [WebSocket] About to add message to Messages collection (current count: 7)
+[06:52:02.610] [WebSocket] Failed to save message to DB: An error occurred while saving the entity changes. See the inner exception for details.
+[06:52:02.610] [WebSocket] ✓ Message added! New count: 8
+[06:52:02.610] [WebSocket] About to add message to Messages collection (current count: 7)
+[06:52:02.611] [WebSocket] Scrolling to last item (ListBox count: 8)
+[06:52:02.611] [WebSocket] ✓ Message added! New count: 8
+[06:52:02.611] [WebSocket] Message from 1: how a u?
+[06:52:02.611] [WebSocket] Scrolling to last item (ListBox count: 8)
+[06:52:09.594] [SendButton] Sending message to chat 26
+[06:52:09.610] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:52:09.610] [WebSocket] ★★★ Message received: ChatId=26, SenderId=2, DeliveryId=306
+[06:52:09.610] [WebSocket] ★★★ Message received: ChatId=26, SenderId=2, DeliveryId=306
+[06:52:09.611] [WebSocket] Current chat: 26, Current user: 2, _lastDeliveryId: 305
+[06:52:09.611] [WebSocket] Current chat: 26, Current user: 1, _lastDeliveryId: 305
+[06:52:09.611] [WebSocket] Successfully decrypted message
+[06:52:09.612] [WebSocket] Event handler invocation completed
+[06:52:09.613] [SendButton] Message sent successfully, waiting for server echo via WebSocket
+[06:52:09.615] [WebSocket] Message saved to DB (DeliveryId=306)
+[06:52:09.616] [WebSocket] About to add message to Messages collection (current count: 8)
+[06:52:09.616] [WebSocket] Failed to save message to DB: An error occurred while saving the entity changes. See the inner exception for details.
+[06:52:09.616] [WebSocket] ✓ Message added! New count: 9
+[06:52:09.616] [WebSocket] About to add message to Messages collection (current count: 8)
+[06:52:09.617] [WebSocket] Scrolling to last item (ListBox count: 9)
+[06:52:09.617] [WebSocket] ✓ Message added! New count: 9
+[06:52:09.617] [WebSocket] Message from 2: dude
+[06:52:09.617] [WebSocket] Scrolling to last item (ListBox count: 9)
+[06:52:13.197] [SendButton] Sending message to chat 26
+[06:52:13.213] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:52:13.214] [WebSocket] Received own message back from server with DeliveryId=307
+[06:52:13.214] [WebSocket] Current chat: 26, Current user: 2, _lastDeliveryId: 306
+[06:52:13.214] [WebSocket] Successfully decrypted message
+[06:52:13.215] [WebSocket] Successfully decrypted message
+[06:52:13.216] [WebSocket] Event handler invocation completed
+[06:52:13.216] [SendButton] Message sent successfully, waiting for server echo via WebSocket
+[06:52:13.216] [WebSocket] Event handler invocation completed
+[06:52:13.218] [WebSocket] Message saved to DB (DeliveryId=307)
+[06:52:13.218] [WebSocket] About to add message to Messages collection (current count: 9)
+[06:52:13.219] [WebSocket] ✓ Message added! New count: 10
+[06:52:13.219] [WebSocket] Message from 1: nope
+[06:52:13.219] [WebSocket] Failed to save message to DB: An error occurred while saving the entity changes. See the inner exception for details.
+[06:52:13.219] [WebSocket] Scrolling to last item (ListBox count: 10)
+[06:52:13.219] [WebSocket] About to add message to Messages collection (current count: 9)
+[06:52:13.220] [WebSocket] ✓ Message added! New count: 10
+[06:52:13.220] [WebSocket] Message from 1: nope
+[06:52:13.220] [WebSocket] Scrolling to last item (ListBox count: 10)
+[06:52:18.554] [SendButton] Sending message to chat 26
+[06:52:18.561] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:52:18.561] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:52:18.561] [WebSocket] ★★★ Message received: ChatId=26, SenderId=1, DeliveryId=308
+[06:52:18.562] [WebSocket] ★★★ Message received: ChatId=26, SenderId=1, DeliveryId=308
+[06:52:18.562] [WebSocket] Received own message back from server with DeliveryId=308
+[06:52:18.562] [WebSocket] Current chat: 26, Current user: 2, _lastDeliveryId: 307
+[06:52:18.563] [WebSocket] Successfully decrypted message
+[06:52:18.563] [WebSocket] Event handler invocation completed
+[06:52:18.563] [SendButton] Message sent successfully, waiting for server echo via WebSocket
+[06:52:18.564] [WebSocket] Event handler invocation completed
+[06:52:18.566] [WebSocket] Message saved to DB (DeliveryId=308)
+[06:52:18.566] [WebSocket] About to add message to Messages collection (current count: 10)
+[06:52:18.566] [WebSocket] Failed to save message to DB: An error occurred while saving the entity changes. See the inner exception for details.
+[06:52:18.567] [WebSocket] ✓ Message added! New count: 11
+[06:52:18.567] [WebSocket] About to add message to Messages collection (current count: 10)
+[06:52:18.567] [WebSocket] Message from 1: okay, maybe
+[06:52:18.568] [WebSocket] ✓ Message added! New count: 11
+[06:52:18.568] [WebSocket] Message from 1: okay, maybe
+[06:52:18.568] [WebSocket] Scrolling to last item (ListBox count: 11)
+[06:52:22.253] [SendButton] Sending message to chat 26
+[06:52:22.269] [WebSocket] Received complete message (length: 137), invoking event handler
+[06:52:22.269] [WebSocket] Received complete message (length: 137), invoking event handler
+[06:52:22.269] [WebSocket] Current chat: 26, Current user: 2, _lastDeliveryId: 308
+[06:52:22.269] [WebSocket] ★★★ Message received: ChatId=26, SenderId=2, DeliveryId=309
+[06:52:22.270] [WebSocket] Successfully decrypted message
+[06:52:22.270] [WebSocket] Current chat: 26, Current user: 1, _lastDeliveryId: 308
+[06:52:22.270] [WebSocket] Successfully decrypted message
+[06:52:22.271] [WebSocket] Event handler invocation completed
+[06:52:22.271] [SendButton] Message sent successfully, waiting for server echo via WebSocket
+[06:52:22.271] [WebSocket] Event handler invocation completed
+[06:52:22.273] [WebSocket] Message saved to DB (DeliveryId=309)
+[06:52:22.274] [WebSocket] Failed to save message to DB: An error occurred while saving the entity changes. See the inner exception for details.
+[06:52:22.274] [WebSocket] About to add message to Messages collection (current count: 11)
+[06:52:22.274] [WebSocket] About to add message to Messages collection (current count: 11)
+[06:52:22.274] [WebSocket] ✓ Message added! New count: 12
+[06:52:22.275] [WebSocket] Message from 2: bruh
+[06:52:22.275] [WebSocket] ✓ Message added! New count: 12
+[06:52:22.275] [WebSocket] Message from 2: bruh
+[06:52:22.275] [WebSocket] Scrolling to last item (ListBox count: 12)
+[06:52:25.740] [ChatListWindow] Logout button clicked
+[06:52:25.740] [ChatListWindow] Refresh timer stopped
+[06:52:25.740] [ChatListWindow] Cleaning up ChatView
+[06:52:25.741] [ChatView] CleanupAsync called for chat 26
+[06:52:25.741] [ChatView] Cleaning up WebSocket service...
+[06:52:25.742] [WebSocket] DisconnectAsync called (State: Open)
+[06:52:25.742] [WebSocket] Cancelled ongoing operations
+[06:52:25.742] [WebSocket] Not closing socket (State: Aborted)
+[06:52:25.743] [ChatView] WebSocket disconnected successfully
+[06:52:25.743] [WebSocket] Dispose called - attempting graceful close
+[06:52:25.743] [WebSocket] WebSocketService disposed
+[06:52:25.744] [ChatView] WebSocket disposed and set to null
+[06:52:25.744] [ChatView] Cleaning up RabbitMQ consumer...
+[06:52:25.744] [RabbitMQ] RabbitMQConsumerService disposed
+[06:52:25.744] [ChatView] RabbitMQ disposed and set to null
+[06:52:25.745] [ChatView] Resetting state: clearing 12 messages, resetting _currentChatId from 26 to 0
+[06:52:25.746] [ChatListWindow] Auth token cleared
+[06:52:25.766] [ChatListWindow] Login window opened
+[06:52:25.768] [ChatListWindow] OnClosed called, _chatView is null
+[06:52:25.769] [ChatListWindow] ChatListWindow closed
+[06:52:25.770] [WebSocket] Receive loop cancelled
+[06:52:31.297] [SendButton] Sending message to chat 26
+[06:52:31.315] [WebSocket] Received complete message (length: 132), invoking event handler
+[06:52:31.315] [WebSocket] ★★★ Message received: ChatId=26, SenderId=1, DeliveryId=310
+[06:52:31.316] [WebSocket] Current chat: 26, Current user: 1, _lastDeliveryId: 309
+[06:52:31.316] [WebSocket] Received own message back from server with DeliveryId=310
+[06:52:31.316] [WebSocket] Successfully decrypted message
+[06:52:31.317] [WebSocket] Event handler invocation completed
+[06:52:31.317] [SendButton] Message sent successfully, waiting for server echo via WebSocket
+[06:52:31.319] [WebSocket] Message saved to DB (DeliveryId=310)
+[06:52:31.319] [WebSocket] About to add message to Messages collection (current count: 12)
+[06:52:31.320] [WebSocket] ✓ Message added! New count: 13
+[06:52:31.320] [WebSocket] Message from 1: well
+[06:52:31.320] [WebSocket] Scrolling to last item (ListBox count: 13)
+[06:52:41.244] [ChatView] InitializeChat called: userId=2, chatId=26, current=0
+[06:52:41.244] [ChatView] Cleaning up before initializing chat 26...
+[06:52:41.244] [ChatView] Disconnecting WebSocket for chat 0
+[06:52:41.244] [WebSocket] DisconnectAsync called (State: )
+[06:52:41.245] [WebSocket] Not closing socket (State: )
+[06:52:41.245] [WebSocket] Dispose called - attempting graceful close
+[06:52:41.245] [WebSocket] WebSocketService disposed
+[06:52:41.245] [ChatView] WebSocket disconnected and disposed
+[06:52:41.245] [ChatView] Clearing messages (switching from chat 0/user 0 to chat 26/user 2)
+[06:52:41.246] [ChatView] Creating new WebSocket service for chat 26
+[06:52:41.249] [LocalDataService] Starting duplicate message cleanup...
+[06:52:41.295] [LocalDataService] Found 116 messages with DeliveryId > 0
+[06:52:41.295] [LocalDataService] ✓ No duplicate messages found - database is clean
+[06:52:41.298] [LoadChatHistory] Clearing 0 existing messages
+[06:52:41.299] [LoadChatHistory] Loading 13 messages from DB
+[06:52:41.299] [LoadChatHistory] Loaded 13 messages, _lastDeliveryId set to 310
+[06:52:41.624] [SessionKey] Received response from server: p=69801839953891396079...
+[06:52:41.624] [SessionKey] Derived DH key for decryption
+[06:52:41.625] [SessionKey] ✗ Failed to decrypt shared key: Padding is invalid and cannot be removed.
+[06:52:41.625] [SessionKey] Using DH-derived key as fallback
+[06:52:41.625] [ChatView] History loaded, _lastDeliveryId=310. Now connecting to real-time services...
+[06:52:41.625] [ChatView] Attempting WebSocket connection for chat 26...
+[06:52:41.625] [WebSocket] Connecting to ws://localhost:5280/ws/chat/26?userId=2
+[06:52:41.628] [WebSocket] Connected successfully (State: Open)
+[06:52:41.629] [ChatView] ✓ Connected to WebSocket for chat 26
+[06:52:54.247] [ChatView] InitializeChat called: userId=2, chatId=23, current=26
+[06:52:54.247] [ChatView] Cleaning up before initializing chat 23...
+[06:52:54.248] [ChatView] Disconnecting WebSocket for chat 26
+[06:52:54.248] [WebSocket] DisconnectAsync called (State: Open)
+[06:52:54.248] [WebSocket] Cancelled ongoing operations
+[06:52:54.248] [WebSocket] Not closing socket (State: Aborted)
+[06:52:54.249] [WebSocket] Dispose called - attempting graceful close
+[06:52:54.249] [WebSocket] WebSocketService disposed
+[06:52:54.249] [ChatView] WebSocket disconnected and disposed
+[06:52:54.250] [ChatView] Clearing messages (switching from chat 26/user 2 to chat 23/user 2)
+[06:52:54.251] [ChatView] Creating new WebSocket service for chat 23
+[06:52:54.252] [WebSocket] Receive loop cancelled
+[06:52:54.253] [LocalDataService] Starting duplicate message cleanup...
+[06:52:54.268] [LocalDataService] Found 116 messages with DeliveryId > 0
+[06:52:54.268] [LocalDataService] ✓ No duplicate messages found - database is clean
+[06:52:54.271] [LoadChatHistory] Clearing 0 existing messages
+[06:52:54.271] [LoadChatHistory] Loading 11 messages from DB
+[06:52:54.271] [LoadChatHistory] Loaded 11 messages, _lastDeliveryId set to 169
+[06:52:54.625] [SessionKey] Received response from server: p=82589510527531856291...
+[06:52:54.625] [SessionKey] Derived DH key for decryption
+[06:52:54.626] [SessionKey] ✗ Failed to decrypt shared key: Padding is invalid and cannot be removed.
+[06:52:54.626] [SessionKey] Using DH-derived key as fallback
+[06:52:54.626] [ChatView] History loaded, _lastDeliveryId=169. Now connecting to real-time services...
+[06:52:54.626] [ChatView] Attempting WebSocket connection for chat 23...
+[06:52:54.627] [WebSocket] Connecting to ws://localhost:5280/ws/chat/23?userId=2
+[06:52:54.628] [WebSocket] Connected successfully (State: Open)
+[06:52:54.629] [ChatView] ✓ Connected to WebSocket for chat 23
+[06:53:00.533] [ChatListWindow] OnClosed called, _chatView is not null
+[06:53:00.534] [ChatListWindow] Calling CleanupAsync on ChatView
+[06:53:00.534] [ChatView] CleanupAsync called for chat 23
+[06:53:00.534] [ChatView] Cleaning up WebSocket service...
+[06:53:00.535] [WebSocket] DisconnectAsync called (State: Open)
+[06:53:00.535] [WebSocket] Cancelled ongoing operations
+[06:53:00.535] [WebSocket] Not closing socket (State: Aborted)
+[06:53:00.536] [ChatView] WebSocket disconnected successfully
+[06:53:00.536] [WebSocket] Dispose called - attempting graceful close
+[06:53:00.536] [WebSocket] WebSocketService disposed
+[06:53:00.537] [ChatView] WebSocket disposed and set to null
+[06:53:00.537] [ChatView] Cleaning up RabbitMQ consumer...
+[06:53:00.537] [RabbitMQ] RabbitMQConsumerService disposed
+[06:53:00.538] [ChatView] RabbitMQ disposed and set to null
+[06:53:00.538] [ChatView] Resetting state: clearing 11 messages, resetting _currentChatId from 23 to 0
+[06:53:00.539] [ChatListWindow] CleanupAsync completed
+[06:53:00.541] [WebSocket] Receive loop cancelled
+[06:53:01.606] [ChatListWindow] OnClosed called, _chatView is not null
+[06:53:01.607] [ChatListWindow] Calling CleanupAsync on ChatView
+[06:53:01.608] [ChatView] CleanupAsync called for chat 26
+[06:53:01.608] [ChatView] Cleaning up WebSocket service...
+[06:53:01.609] [WebSocket] DisconnectAsync called (State: Open)
+[06:53:01.609] [WebSocket] Cancelled ongoing operations
+[06:53:01.610] [WebSocket] Not closing socket (State: Aborted)
+[06:53:01.610] [ChatView] WebSocket disconnected successfully
+[06:53:01.610] [WebSocket] Dispose called - attempting graceful close
+[06:53:01.611] [WebSocket] WebSocketService disposed
+[06:53:01.611] [ChatView] WebSocket disposed and set to null
+[06:53:01.611] [ChatView] Cleaning up RabbitMQ consumer...
+[06:53:01.612] [RabbitMQ] RabbitMQConsumerService disposed
+[06:53:01.612] [ChatView] RabbitMQ disposed and set to null
+[06:53:01.613] [ChatView] Resetting state: clearing 13 messages, resetting _currentChatId from 26 to 0
+[06:53:01.613] [ChatListWindow] CleanupAsync completed
+[06:53:01.616] [WebSocket] Receive loop cancelled
